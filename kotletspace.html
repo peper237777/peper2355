@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Galaktyczny Kotlet 🚀🥩</title>
+  <style>
+    body { margin: 0; background: black; overflow: hidden; font-family: -apple-system, sans-serif; }
+    canvas { display: block; margin: 0 auto; background: #000; }
+    #hud, #shop { color: white; position: absolute; z-index: 1; font-size: 18px; padding: 10px; display: none; }
+    #hud { top: 10px; left: 10px; }
+    #shop { top: 10px; right: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 10px; }
+    #shop button { display: block; margin: 5px 0; width: 200px; padding: 5px; background: #007aff; border: none; color: white; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    #shop button:hover { background: #0051c7; }
+    .achievement { position: absolute; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(50,50,50,0.95); color: white; padding: 15px 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 16px; opacity: 0; transition: all 0.5s ease; z-index: 1000; }
+    .achievement.show { top: 20px; opacity: 1; }
+    #gameOverScreen, #menuScreen, #bossMenu, #victoryScreen { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 15px; text-align: center; z-index: 2000; opacity: 0; transition: opacity 1s ease; }
+    #gameOverScreen.show, #menuScreen.show, #bossMenu.show, #victoryScreen.show { opacity: 1; }
+    #gameOverScreen h1, #menuScreen h1, #bossMenu h1, #victoryScreen h1 { margin: 0; font-size: 36px; color: #ff2d55; text-shadow: 0 0 10px rgba(255,50,50,0.5); }
+    #gameOverScreen p, #menuScreen p, #bossMenu p, #victoryScreen p { font-size: 20px; margin: 10px 0; color: #ddd; }
+    #gameOverScreen button, #menuScreen button, #bossMenu button, #victoryScreen button { padding: 10px 20px; background: #007aff; border: none; color: white; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin: 5px; box-shadow: 0 0 10px rgba(0,122,255,0.5); }
+    #gameOverScreen button:hover, #menuScreen button:hover, #bossMenu button:hover, #victoryScreen button:hover { background: #0051c7; box-shadow: 0 0 20px rgba(0,122,255,0.8); transform: scale(1.05); }
+    #bossHealthBar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 300px; height: 20px; background: rgba(255,255,255,0.2); border-radius: 10px; z-index: 1000; display: none; }
+    #bossHealth { height: 100%; background: #ff2d55; border-radius: 10px; transition: width 0.3s ease; }
+    .boss-category { margin: 20px 0; }
+    .boss-category h2 { font-size: 24px; margin: 10px 0; color: #ff2d55; }
+    #victoryScreen { background: linear-gradient(45deg, #1a1a1a, #2a2a2a); border: 2px solid #ff2d55; box-shadow: 0 0 30px rgba(255,50,50,0.5); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 30px rgba(255,50,50,0.5); } 50% { box-shadow: 0 0 50px rgba(255,50,50,0.8); } }
+    .stat { font-size: 18px; margin: 8px 0; color: #00ff00; text-shadow: 0 0 5px rgba(0,255,0,0.5); opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+    .stat.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="480" height="640"></canvas>
+
+<div id="hud">
+  <span>Punkty: <span id="score">0</span></span> |
+  <span>Życia: <span id="lives">3</span></span> |
+  <span>Fala: <span id="wave">1</span></span>
+</div>
+
+<div id="shop">
+  <h3>Sklep</h3>
+  <button onclick="buyUpgrade('fasterShoot', 100)">Szybsze strzały (100 pkt)</button>
+  <button onclick="buyUpgrade('doubleShoot', 250)">Podwójne strzały (250 pkt)</button>
+  <button onclick="buyUpgrade('shield', 200)">Tarcza ochronna (200 pkt)</button>
+  <button onclick="buyUpgrade('speedUp', 150)">Przyspieszenie (150 pkt)</button>
+  <button onclick="buyUpgrade('extraLife', 120)">Dodatkowe życie (120 pkt)</button>
+  <button id="armor" onclick="buyUpgrade('armor', 300)" style="display: none;">Pancerz (300 pkt)</button>
+  <button id="fastShield" onclick="buyUpgrade('fastShield', 150)" style="display: none;">Szybkie ładowanie (150 pkt)</button>
+  <button id="overdrive" onclick="buyUpgrade('overdrive', 400)" style="display: none;">Overdrive (400 pkt)</button>
+  <button id="laser" onclick="buyUpgrade('laser', 350)" style="display: none;">Laser (350 pkt)</button>
+  <button id="regen" onclick="buyUpgrade('regen', 400)" style="display: none;">Regeneracja (400 pkt)</button>
+  <button id="bomb" onclick="buyUpgrade('bomb', 500)" style="display: none;">Bomba (500 pkt)</button>
+  <button id="forceField" onclick="buyUpgrade('forceField', 450)" style="display: none;">Pole siłowe (450 pkt)</button>
+  <button id="shockwave" onclick="buyUpgrade('shockwave', 300)" style="display: none;">Fala uderzeniowa (300 pkt)</button>
+</div>
+
+<div id="bossHealthBar"><div id="bossHealth"></div></div>
+<div id="achievementContainer"></div>
+<div id="gameOverScreen">
+  <h1>Game Over</h1>
+  <p>Twój wynik: <span id="finalScore">0</span></p>
+  <p>Osiągnięta fala: <span id="finalWave">0</span></p>
+  <p>Zabici wrogowie: <span id="finalKills">0</span></p>
+  <button onclick="showMenu()">Powrót do menu</button>
+</div>
+<div id="menuScreen">
+  <h1>Galaktyczny Kotlet</h1>
+  <p>Rekord: <span id="highScore">0</span></p>
+  <button onclick="startGame('normal')">Tryb Normalny</button>
+  <button onclick="startGame('hard')">Tryb Trudny</button>
+  <button onclick="startGame('survival')">Tryb Survival</button>
+  <button onclick="showBossMenu()">Tryb Bossowie</button>
+</div>
+<div id="bossMenu">
+  <h1>Wybierz Bossa</h1>
+  <div class="boss-category">
+    <h2>Łatwe</h2>
+    <button onclick="startBossGame('slime')">Kosmiczny Śluz 🐍</button>
+    <button onclick="startBossGame('spider')">Gwiezdny Pająk 🕷️</button>
+    <button onclick="startBossGame('bat')">Nietoperz Cienia 🦇</button>
+    <button onclick="startBossGame('ghost')">Kosmiczny Duch 👻</button>
+  </div>
+  <div class="boss-category">
+    <h2>Trudne</h2>
+    <button onclick="startBossGame('dragon')">Smoczy Król 🐉</button>
+    <button onclick="startBossGame('golem')">Żelazny Golem ⚙️</button>
+    <button onclick="startBossGame('tyrant')">Galaktyczny Tyran 🤖</button>
+    <button onclick="startBossGame('skeleton')">Kościany Władca 💀</button>
+  </div>
+  <div class="boss-category">
+    <h2>Boskie</h2>
+    <button onclick="startBossGame('phoenix')">Feniks Płomieni 🔥</button>
+    <button onclick="startBossGame('leviathan')">Lewiatan Głębin 🐋</button>
+    <button onclick="startBossGame('titan')">Tytan Chaosu 🌌</button>
+    <button onclick="startBossGame('seraph')">Serafin Światła ✨</button>
+  </div>
+</div>
+<div id="victoryScreen">
+  <h1>Zwycięstwo!</h1>
+  <p class="stat" id="victoryScore">Zdobyte punkty: <span>0</span></p>
+  <p class="stat" id="victoryTime">Czas walki: <span>0</span>s</p>
+  <p class="stat" id="victoryDamage">Zadane obrażenia: <span>0</span></p>
+  <p class="stat" id="victoryDiamonds">Zebrane diamenty: <span>0</span></p>
+  <p class="stat" id="victoryBullets">Wystrzelone pociski: <span>0</span></p>
+  <p class="stat" id="victoryLives">Pozostałe życia: <span>0</span></p>
+  <button onclick="showMenu()">Powrót do menu</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const playerIcon = "🥩";
+const explosionIcon = "💥";
+const pointIcon = "💎";
+
+let player = { x: canvas.width / 2 - 25, y: canvas.height - 80, width: 50, height: 50, speed: 5, lives: 3, shield: false, doubleShoot: false, armor: false, regenActive: false, overdrive: false, laserActive: false, forceFieldActive: false };
+let bullets = [];
+let enemies = [];
+let explosions = [];
+let points = [];
+let enemyAttacks = [];
+let score = 0;
+let wave = 1;
+let canShoot = true;
+let shootDelay = 400;
+let kills = 0;
+let gameRunning = false;
+let currentMode = null;
+let shieldCooldown = 0;
+let regenTimer = 0;
+let laserTimer = 0;
+let waveTimer = 0;
+let gameTimer = 0;
+let damageDealt = 0;
+let diamondsCollected = 0;
+let bulletsFired = 0;
+let survivalDamage = 0;
+
+const keys = {};
+const achievementsUnlocked = [];
+
+document.addEventListener('keydown', (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if ((e.key === ' ' || e.code === 'Space') && canShoot && gameRunning) {
+    shoot();
+    canShoot = false;
+    setTimeout(() => canShoot = true, shootDelay);
+  }
+});
+
+document.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+function shoot() {
+  bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10, speed: 8, scale: 1, damage: player.overdrive ? 2 : 1 });
+  if (player.doubleShoot) bullets.push({ x: player.x + player.width / 2 + 10, y: player.y, width: 5, height: 10, speed: 8, scale: 1, damage: player.overdrive ? 2 : 1 });
+  bulletsFired += player.doubleShoot ? 2 : 1;
+}
+
+function buyUpgrade(type, cost) {
+  if (score < cost) return showAchievement("Za mało punktów!");
+  score -= cost;
+  switch(type) {
+    case 'fasterShoot': shootDelay = 150; showAchievement("Szybsze strzały!"); break;
+    case 'doubleShoot': player.doubleShoot = true; showAchievement("Podwójne strzały!"); break;
+    case 'shield': player.shield = true; setTimeout(() => player.shield = false, 5000); shieldCooldown = 300; showAchievement("Tarcza na 5s!"); break;
+    case 'speedUp': player.speed += 2; showAchievement("Prędkość zwiększona!"); break;
+    case 'extraLife': if (player.lives >= 5) { showAchievement("Maksymalna liczba żyć!"); score += cost; return; } player.lives += 1; showAchievement("Dodatkowe życie!"); break;
+    case 'armor': if (currentMode === 'hard') { player.armor = true; showAchievement("Pancerz aktywny!"); } break;
+    case 'fastShield': if (currentMode === 'hard') { shieldCooldown = Math.max(0, shieldCooldown - 60); showAchievement("Szybsze ładowanie tarczy!"); } break;
+    case 'overdrive': if (currentMode === 'hard') { player.overdrive = true; showAchievement("Overdrive aktywny!"); } break;
+    case 'laser': if (currentMode === 'hard') { player.laserActive = true; laserTimer = 180; showAchievement("Laser aktywowany!"); } break;
+    case 'regen': if (currentMode === 'survival') { player.regenActive = true; showAchievement("Regeneracja aktywna!"); } break;
+    case 'bomb': if (currentMode === 'survival') { enemies = []; explosions = []; enemyAttacks = []; for (let i = 0; i < 10; i++) explosions.push(createExplosion(Math.random() * canvas.width, Math.random() * canvas.height)); showAchievement("Bomba aktywowana!"); } break;
+    case 'forceField': if (currentMode === 'survival') { player.forceFieldActive = true; showAchievement("Pole siłowe aktywne!"); } break;
+    case 'shockwave': if (currentMode === 'survival') { enemies.forEach(enemy => enemy.y -= 100); showAchievement("Fala uderzeniowa!"); } break;
+  }
+}
+
+function showAchievement(text) {
+  if (achievementsUnlocked.includes(text)) return;
+  achievementsUnlocked.push(text);
+  const container = document.getElementById('achievementContainer');
+  const el = document.createElement('div');
+  el.className = 'achievement';
+  el.innerText = text;
+  container.appendChild(el);
+  setTimeout(() => el.classList.add('show'), 100);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => container.removeChild(el), 500); }, 3000);
+}
+
+function spawnEnemy(type, x, y) {
+  let enemy;
+  if (type === 'basic') {
+    enemy = { x, y, width: 40, height: 40, speed: 2, dx: (Math.random() - 0.5) * 2, health: 1, icon: '👾', type: 'basic' };
+  }
+  enemies.push(enemy);
+}
+
+function spawnWave() {
+  if (currentMode === 'normal') {
+    const patterns = [
+      () => { for (let i = 0; i < 6; i++) spawnEnemy('basic', Math.random() * (canvas.width - 40), -40 - Math.random() * 50); },
+      () => { for (let i = 0; i < 5; i++) spawnEnemy('basic', i % 2 === 0 ? 50 + Math.random() * 50 : canvas.width - 90 - Math.random() * 50, -40 - i * 30); },
+      () => { for (let i = 0; i < 7; i++) spawnEnemy('basic', canvas.width / 2 + Math.cos(i * Math.PI / 3) * 100, -40 + Math.sin(i * Math.PI / 3) * 50); },
+      () => { for (let i = 0; i < 8; i++) spawnEnemy('basic', Math.random() * (canvas.width - 40), -40 - i * 20); }
+    ];
+    patterns[wave % patterns.length]();
+  } else if (currentMode === 'hard') {
+    const patterns = [
+      () => { for (let i = 0; i < 7; i++) spawnEnemy('basic', Math.random() * (canvas.width - 40), -40 - Math.random() * 60); },
+      () => { for (let i = 0; i < 6; i++) spawnEnemy('basic', i % 2 === 0 ? 50 + Math.random() * 50 : canvas.width - 90 - Math.random() * 50, -40 - i * 40); },
+      () => { for (let i = 0; i < 8; i++) spawnEnemy('basic', canvas.width / 2 + Math.cos(i * Math.PI / 4) * 120, -40 + Math.sin(i * Math.PI / 4) * 60); },
+      () => { for (let i = 0; i < 9; i++) spawnEnemy('basic', Math.random() * (canvas.width - 40), -40 - i * 25); }
+    ];
+    patterns[wave % patterns.length]();
+  } else if (currentMode === 'survival') {
+    const patterns = [
+      () => { for (let i = 0; i < 5; i++) spawnEnemy('basic', Math.random() * (canvas.width - 40), -40 - Math.random() * 50); },
+      () => { for (let i = 0; i < 4; i++) spawnEnemy('basic', i % 2 === 0 ? 50 + Math.random() * 50 : canvas.width - 90 - Math.random() * 50, -40 - i * 30); },
+      () => { for (let i = 0; i < 6; i++) spawnEnemy('basic', canvas.width / 2 + Math.cos(i * Math.PI / 3) * 80, -40 + Math.sin(i * Math.PI / 3) * 40); }
+    ];
+    patterns[Math.floor(Math.random() * patterns.length)]();
+  }
+}
+
+function spawnPoint() {
+  points.push({ x: Math.random() * (canvas.width - 20), y: -20, width: 20, height: 20, speed: 2, value: Math.floor(Math.random() * (15 - 3 + 1)) + 3 });
+}
+
+function spawnBoss(type) {
+  let boss;
+  const bossData = {
+    slime: { health: 20, maxHealth: 20, icon: '🐍', animation: 'sinusoidal', attackCooldown: 120 },
+    spider: { health: 25, maxHealth: 25, icon: '🕷️', animation: 'circular', attackCooldown: 90 },
+    bat: { health: 22, maxHealth: 22, icon: '🦇', animation: 'pulsing', attackCooldown: 150 },
+    ghost: { health: 25, maxHealth: 25, icon: '👻', animation: 'random', attackCooldown: 100 },
+    dragon: { health: 30, maxHealth: 30, icon: '🐉', animation: 'sinusoidal', attackCooldown: 90 },
+    golem: { health: 35, maxHealth: 35, icon: '⚙️', animation: 'circular', attackCooldown: 120 },
+    tyrant: { health: 40, maxHealth: 40, icon: '🤖', animation: 'pulsing', attackCooldown: 80 },
+    skeleton: { health: 38, maxHealth: 38, icon: '💀', animation: 'random', attackCooldown: 100 },
+    phoenix: { health: 50, maxHealth: 50, icon: '🔥', animation: 'sinusoidal', attackCooldown: 90 },
+    leviathan: { health: 55, maxHealth: 55, icon: '🐋', animation: 'circular', attackCooldown: 110 },
+    titan: { health: 60, maxHealth: 60, icon: '🌌', animation: 'pulsing', attackCooldown: 80 },
+    seraph: { health: 65, maxHealth: 65, icon: '✨', animation: 'random', attackCooldown: 70 }
+  };
+  const data = bossData[type] || { health: 10 + wave * 5, maxHealth: 10 + wave * 5, icon: '👹', animation: 'sinusoidal', attackCooldown: 90 };
+  boss = { x: canvas.width / 2 - 60, y: 50, baseX: canvas.width / 2 - 60, baseY: 50, width: 120, height: 120, speed: 1, dx: 1, boss: true, type, health: data.health, maxHealth: data.maxHealth, scale: 1, opacity: 1, icon: data.icon, driftTimer: 0, animation: data.animation, attackCooldown: data.attackCooldown, specialAttackUsed: false, attackTimer: 0, pointTimer: 0 };
+  enemies.push(boss);
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  if (keys['arrowleft'] || keys['a']) player.x -= player.speed;
+  if (keys['arrowright'] || keys['d']) player.x += player.speed;
+  if (keys['arrowup'] || keys['w']) player.y -= player.speed;
+  if (keys['arrowdown'] || keys['s']) player.y += player.speed;
+
+  player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
+  player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
+
+  bullets.forEach((bullet, i) => {
+    bullet.y -= bullet.speed;
+    bullet.scale += 0.01;
+    if (bullet.y < -10) bullets.splice(i, 1);
+  });
+
+  enemies.forEach((enemy, i) => {
+    if (enemy.boss) {
+      enemy.driftTimer += 0.05;
+      switch(enemy.animation) {
+        case 'sinusoidal': enemy.x = enemy.baseX + Math.sin(enemy.driftTimer) * 50; enemy.y = enemy.baseY + Math.cos(enemy.driftTimer) * 20; break;
+        case 'circular': enemy.x = enemy.baseX + Math.cos(enemy.driftTimer) * 40; enemy.y = enemy.baseY + Math.sin(enemy.driftTimer) * 40; break;
+        case 'pulsing': enemy.x = enemy.baseX; enemy.y = enemy.baseY; enemy.scale = 1 + Math.sin(enemy.driftTimer) * 0.2; break;
+        case 'random': if (Math.random() < 0.05) { enemy.baseX = Math.random() * (canvas.width - enemy.width); enemy.baseY = 40 + Math.random() * 110; } enemy.x += (enemy.baseX - enemy.x) * 0.1; enemy.y += (enemy.baseY - enemy.y) * 0.1; break;
+      }
+      enemy.x = Math.max(0, Math.min(enemy.x, canvas.width - enemy.width));
+      enemy.y = Math.max(40, Math.min(enemy.y, 150));
+
+      enemy.pointTimer++;
+      if (enemy.pointTimer >= 300) {
+        spawnPoint();
+        enemy.pointTimer = 0;
+      }
+    } else {
+      enemy.y += enemy.speed;
+      enemy.x += enemy.dx;
+      if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) enemy.dx *= -1;
+      if (enemy.y > canvas.height) {
+        if (currentMode === 'survival') {
+          survivalDamage += 0.5;
+          if (survivalDamage >= 1) { player.lives -= 1; survivalDamage = 0; if (player.lives <= 0) gameOver(); }
+        }
+        enemies.splice(i, 1);
+      }
+    }
+
+    if (collision(enemy, player)) {
+      if (!player.shield) { player.lives -= player.armor ? 0.5 : 1; if (player.lives <= 0) gameOver(); }
+      explosions.push(createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+      if (!enemy.boss) enemies.splice(i, 1);
+    }
+  });
+
+  bullets.forEach((bullet, b) => {
+    enemies.forEach((enemy, e) => {
+      if (collision(bullet, enemy)) {
+        bullets.splice(b, 1);
+        explosions.push(createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+        enemy.health -= bullet.damage;
+        damageDealt += bullet.damage;
+        if (enemy.health <= 0) {
+          enemies.splice(e, 1);
+          score += enemy.boss ? 50 : 10;
+          kills++;
+          if (currentMode === 'bosses') showVictoryScreen();
+          if (Math.random() < 0.2) spawnPoint();
+        }
+      }
+    });
+  });
+
+  points.forEach((point, i) => {
+    point.y += point.speed;
+    if (point.y > canvas.height) points.splice(i, 1);
+    if (collision(point, player)) {
+      score += point.value;
+      diamondsCollected++;
+      points.splice(i, 1);
+      showAchievement(`+${point.value} punktów!`);
+    }
+  });
+
+  explosions.forEach((explosion, i) => {
+    explosion.timer++;
+    explosion.size += (explosion.maxSize - explosion.size) * 0.2;
+    explosion.opacity -= 1 / explosion.duration;
+    if (explosion.timer > explosion.duration) explosions.splice(i, 1);
+  });
+
+  if (currentMode === 'bosses' && enemies.length > 0) {
+    const boss = enemies[0];
+    document.getElementById('bossHealthBar').style.display = 'block';
+    document.getElementById('bossHealth').style.width = `${(boss.health / boss.maxHealth) * 100}%`;
+
+    boss.attackTimer++;
+    if (boss.attackTimer >= boss.attackCooldown) {
+      switch(boss.type) {
+        case 'slime': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 30, height: 30, speed: 2, duration: 300, icon: '☣️', type: 'slimePool' }); break;
+        case 'spider': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 20, height: 20, speed: 3, angle: Math.atan2(player.y - boss.y, player.x - boss.x), icon: '🕸️', type: 'web' }); break;
+        case 'bat': for (let i = -2; i <= 2; i++) enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 15, height: 15, speed: 4, dx: i * 0.5, icon: '🔊', type: 'soundWave' }); break;
+        case 'ghost': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 20, height: 20, speed: 2, angle: Math.atan2(player.y - boss.y, player.x - boss.x), icon: '👻', type: 'ghostClone' }); break;
+        case 'dragon': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 10, height: 40, speed: 5, dx: (player.x - boss.x) / 50, icon: '🔥', type: 'dragonBreath' }); break;
+        case 'golem': for (let i = 0; i < 5; i++) enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 10, height: 10, speed: 3, dx: (Math.random() - 0.5) * 4, icon: '🪨', type: 'rockShard' }); break;
+        case 'tyrant': enemyAttacks.push({ x: 0, y: boss.y + boss.height, width: 10, height: canvas.height, speed: 2, dx: 2, icon: '➡️', type: 'laserScan' }); break;
+        case 'skeleton': for (let i = 0; i < 8; i++) { const angle = (i / 8) * Math.PI * 2; enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 10, height: 10, speed: 3, angle, icon: '🦴', type: 'boneProjectile' }); } break;
+        case 'phoenix': for (let i = 0; i < 3; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: -20, width: 15, height: 15, speed: 4, icon: '🔥', type: 'fireRain' }); break;
+        case 'leviathan': enemyAttacks.push({ x: 0, y: canvas.height, width: canvas.width, height: 20, speed: 3, dy: -3, icon: '🌊', type: 'waterWave' }); break;
+        case 'titan': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 30, height: 30, duration: 300, icon: '🌀', type: 'blackHole' }); break;
+        case 'seraph': for (let i = 0; i < 4; i++) { const angle = (i / 4) * Math.PI * 2; enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 10, height: 10, speed: 5, angle, icon: '✨', type: 'lightBeam' }); } break;
+      }
+      boss.attackTimer = 0;
+    }
+
+    if (boss.health <= boss.maxHealth * 0.3 && !boss.specialAttackUsed) {
+      boss.specialAttackUsed = true;
+      showAchievement("Boss używa specjalnego ataku!");
+      switch(boss.type) {
+        case 'slime': for (let i = 0; i < 5; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, width: 40, height: 40, duration: 600, icon: '☁️', type: 'toxicFog' }); break;
+        case 'spider': for (let i = 0; i < 3; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: -20, width: 20, height: 20, speed: 2, icon: '🕷️', type: 'spiderling' }); break;
+        case 'bat': enemyAttacks.push({ x: 0, y: 0, width: canvas.width, height: canvas.height, duration: 300, icon: '🌑', type: 'darkness' }); break;
+        case 'ghost': for (let i = 0; i < 4; i++) enemyAttacks.push({ x: i % 2 === 0 ? -20 : canvas.width + 20, y: Math.random() * canvas.height, width: 20, height: 20, speed: 3, dx: i % 2 === 0 ? 3 : -3, icon: '👻', type: 'haunt' }); break;
+        case 'dragon': for (let i = 0; i < 10; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: -20, width: 15, height: 15, speed: 5, icon: '🔥', type: 'fireStorm' }); break;
+        case 'golem': for (let i = 0; i < 8; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: -20, width: 20, height: 20, speed: 4, icon: '🪨', type: 'earthquake' }); break;
+        case 'tyrant': enemyAttacks.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 30, height: canvas.height, speed: 0, duration: 120, icon: '⚡', type: 'megaLaser' }); break;
+        case 'skeleton': for (let i = 0; i < 5; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: -20, width: 20, height: 20, speed: 2, icon: '💀', type: 'skeletonMinion' }); break;
+        case 'phoenix': boss.health += 10; showAchievement("Feniks odradza się!"); break;
+        case 'leviathan': enemyAttacks.push({ x: 0, y: canvas.height, width: canvas.width, height: 50, speed: 5, dy: -5, icon: '🌊', type: 'tsunami' }); break;
+        case 'titan': for (let i = 0; i < 10; i++) enemyAttacks.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, width: 15, height: 15, speed: 3, dx: (Math.random() - 0.5) * 4, icon: '💥', type: 'chaosBlast' }); break;
+        case 'seraph': for (let i = 0; i < 6; i++) enemyAttacks.push({ x: (canvas.width / 6) * i, y: -20, width: 10, height: canvas.height, speed: 3, icon: '✨', type: 'divineLight' }); break;
+      }
+    }
+
+    enemyAttacks.forEach((attack, i) => {
+      if (attack.speed) {
+        attack.y += attack.speed;
+        if (attack.dx) attack.x += attack.dx;
+        if (attack.dy) attack.y += attack.dy;
+        if (attack.angle) { attack.x += Math.cos(attack.angle) * attack.speed; attack.y += Math.sin(attack.angle) * attack.speed; }
+      }
+      if (attack.duration) attack.duration--;
+
+      switch(attack.type) {
+        case 'slimePool': if (attack.duration <= 0) enemyAttacks.splice(i, 1); break;
+        case 'web': if (collision(attack, player)) { player.speed = Math.max(2, player.speed - 1); setTimeout(() => player.speed = 5, 3000); enemyAttacks.splice(i, 1); } break;
+        case 'soundWave': case 'dragonBreath': case 'rockShard': case 'boneProjectile': case 'fireRain': case 'lightBeam': case 'fireStorm': case 'earthquake': case 'chaosBlast': break;
+        case 'ghostClone': case 'spiderling': case 'skeletonMinion': case 'haunt': attack.angle = Math.atan2(player.y - attack.y, player.x - attack.x); break;
+        case 'laserScan': attack.x += attack.dx; if (attack.x > canvas.width || attack.x < -attack.width) enemyAttacks.splice(i, 1); break;
+        case 'waterWave': case 'tsunami': if (attack.y < -attack.height) enemyAttacks.splice(i, 1); break;
+        case 'blackHole': const dx = attack.x - player.x; const dy = attack.y - player.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance < 100) { player.x += dx * 0.02; player.y += dy * 0.02; } if (attack.duration <= 0) enemyAttacks.splice(i, 1); break;
+        case 'toxicFog': if (collision(attack, player) && !player.shield) { player.lives -= 0.1; player.speed = Math.max(2, player.speed - 0.5); setTimeout(() => player.speed = 5, 3000); } if (attack.duration <= 0) enemyAttacks.splice(i, 1); break;
+        case 'darkness': if (attack.duration <= 0) enemyAttacks.splice(i, 1); break;
+        case 'megaLaser': if (attack.duration <= 0) enemyAttacks.splice(i, 1); break;
+        case 'divineLight': break;
+      }
+
+      if (collision(attack, player) && !player.shield && attack.type !== 'web' && attack.type !== 'blackHole' && attack.type !== 'toxicFog' && attack.type !== 'darkness') {
+        player.lives -= player.armor ? 0.5 : 1;
+        if (attack.type !== 'laserScan' && attack.type !== 'waterWave' && attack.type !== 'tsunami' && attack.type !== 'megaLaser' && attack.type !== 'divineLight') enemyAttacks.splice(i, 1);
+        if (player.lives <= 0) gameOver();
+      }
+      if (attack.y > canvas.height || attack.x < -attack.width || attack.x > canvas.width + attack.width) {
+        if (attack.type !== 'laserScan' && attack.type !== 'waterWave' && attack.type !== 'tsunami' && attack.type !== 'divineLight') enemyAttacks.splice(i, 1);
+      }
+    });
+  } else {
+    document.getElementById('bossHealthBar').style.display = 'none';
+  }
+
+  if (currentMode === 'hard' && !player.shield && shieldCooldown > 0) shieldCooldown--;
+  if (currentMode === 'hard' && player.laserActive && laserTimer > 0) {
+    laserTimer--;
+    enemies.forEach((enemy, i) => {
+      if (Math.abs(enemy.x + enemy.width / 2 - player.x) < 20) {
+        explosions.push(createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+        enemy.health -= enemy.boss ? 2 : 10;
+        damageDealt += enemy.boss ? 2 : 10;
+        if (enemy.health <= 0) {
+          enemies.splice(i, 1);
+          score += enemy.boss ? 50 : 10;
+          kills++;
+          if (currentMode === 'bosses') showVictoryScreen();
+        }
+      }
+    });
+    if (laserTimer <= 0) player.laserActive = false;
+  }
+  if (currentMode === 'survival') {
+    if (player.regenActive) {
+      regenTimer++;
+      if (regenTimer >= 600 && player.lives < 5) { player.lives += 0.5; regenTimer = 0; showAchievement("Życie zregenerowane!"); }
+    }
+    if (player.forceFieldActive) {
+      enemies.forEach((enemy, i) => {
+        if (enemy.y < 10 || enemy.y > canvas.height - 10 || enemy.x < 10 || enemy.x > canvas.width - 10) {
+          explosions.push(createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+          enemies.splice(i, 1);
+          score += 10;
+          kills++;
+        }
+      });
+    }
+  }
+
+  if (currentMode !== 'bosses') {
+    waveTimer++;
+    if (currentMode === 'normal' && waveTimer >= 300) {
+      if (enemies.length === 0) { wave++; spawnWave(); waveTimer = 0; }
+    } else if (currentMode === 'hard' && waveTimer >= 240) {
+      if (enemies.length === 0) { wave++; spawnWave(); waveTimer = 0; }
+    } else if (currentMode === 'survival' && waveTimer >= 180) {
+      wave++; spawnWave(); waveTimer = 0;
+      if (wave % 5 === 0) {
+        score += 50; showAchievement("Bonus za przetrwanie: +50 punktów!");
+        if (player.lives < 5) { player.lives += 0.5; showAchievement("Dodatkowe życie!"); }
+      }
+    }
+  }
+
+  if (gameRunning) gameTimer++;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!gameRunning) return;
+
+  if (currentMode === 'bosses' && enemyAttacks.some(attack => attack.type === 'darkness')) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  ctx.save();
+  ctx.font = "40px -apple-system";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.translate(player.x + player.width/2, player.y + player.height/2);
+  ctx.rotate(Math.sin(Date.now() / 200) * 0.05);
+  ctx.fillText(playerIcon, 0, 0);
+  ctx.restore();
+
+  if (player.shield) {
+    ctx.save();
+    ctx.font = "50px -apple-system";
+    ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 100) * 0.2;
+    ctx.fillText("🛡️", player.x + player.width/2, player.y + player.height/2);
+    ctx.restore();
+  }
+  if (player.laserActive) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(player.x + player.width / 2, player.y);
+    ctx.lineTo(player.x + player.width / 2, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (player.forceFieldActive) {
+    ctx.save();
+    ctx.strokeStyle = 'cyan';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.restore();
+  }
+
+  bullets.forEach(bullet => {
+    ctx.save();
+    ctx.fillStyle = 'yellow';
+    ctx.translate(bullet.x + bullet.width / 2, bullet.y + bullet.height / 2);
+    ctx.scale(bullet.scale, bullet.scale);
+    ctx.fillRect(-bullet.width / 2, -bullet.height / 2, bullet.width, bullet.height);
+    ctx.restore();
+  });
+
+  enemies.forEach(enemy => {
+    ctx.save();
+    ctx.font = enemy.boss ? "60px -apple-system" : "40px -apple-system";
+    ctx.translate(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+    ctx.scale(enemy.scale || 1, enemy.scale || 1);
+    ctx.fillText(enemy.icon, 0, 0);
+    ctx.restore();
+  });
+
+  explosions.forEach(explosion => {
+    ctx.save();
+    ctx.font = `${explosion.size}px -apple-system`;
+    ctx.globalAlpha = explosion.opacity;
+    ctx.fillText(explosionIcon, explosion.x, explosion.y);
+    ctx.restore();
+  });
+
+  enemyAttacks.forEach(attack => {
+    ctx.save();
+    ctx.font = attack.type === 'waterWave' || attack.type === 'tsunami' ? "40px -apple-system" : "20px -apple-system";
+    if (attack.type === 'laserScan' || attack.type === 'megaLaser') {
+      ctx.fillStyle = 'red';
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(attack.x, attack.y, attack.width, attack.height);
+    } else if (attack.type === 'divineLight') {
+      ctx.fillStyle = 'yellow';
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(attack.x, attack.y, attack.width, attack.height);
+    } else if (attack.type !== 'darkness') {
+      ctx.fillText(attack.icon, attack.x, attack.y);
+    }
+    ctx.restore();
+  });
+
+  points.forEach(point => {
+    ctx.save();
+    ctx.font = "20px -apple-system";
+    ctx.fillText(pointIcon, point.x, point.y);
+    ctx.restore();
+  });
+
+  document.getElementById('score').innerText = score;
+  document.getElementById('lives').innerText = Math.floor(player.lives);
+  document.getElementById('wave').innerText = wave;
+}
+
+function collision(a, b) {
+  const hitboxScale = 0.7;
+  const aWidth = a.width * hitboxScale;
+  const aHeight = a.height * hitboxScale;
+  const bWidth = b.width * hitboxScale;
+  const bHeight = b.height * hitboxScale;
+  const aX = a.x + (a.width - aWidth) / 2;
+  const aY = a.y + (a.height - aHeight) / 2;
+  const bX = b.x + (b.width - bWidth) / 2;
+  const bY = b.y + (b.height - bHeight) / 2;
+  return aX < bX + bWidth && aX + aWidth > bX && aY < bY + bHeight && aY + aHeight > bY;
+}
+
+function createExplosion(x, y) {
+  return { x, y, size: 20, maxSize: 60, opacity: 1, timer: 0, duration: 20 };
+}
+
+function gameOver() {
+  gameRunning = false;
+  updateHighScore();
+  document.getElementById('gameOverScreen').style.display = 'block';
+  document.getElementById('gameOverScreen').classList.add('show');
+  document.getElementById('finalScore').innerText = score;
+  document.getElementById('finalWave').innerText = wave;
+  document.getElementById('finalKills').innerText = kills;
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('shop').style.display = 'none';
+  document.getElementById('bossHealthBar').style.display = 'none';
+}
+
+function showVictoryScreen() {
+  gameRunning = false;
+  updateHighScore();
+  document.getElementById('victoryScreen').style.display = 'block';
+  document.getElementById('victoryScreen').classList.add('show');
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('shop').style.display = 'none';
+  document.getElementById('bossHealthBar').style.display = 'none';
+  const stats = [
+    { element: document.getElementById('victoryScore').querySelector('span'), value: score },
+    { element: document.getElementById('victoryTime').querySelector('span'), value: Math.floor(gameTimer / 60) },
+    { element: document.getElementById('victoryDamage').querySelector('span'), value: damageDealt },
+    { element: document.getElementById('victoryDiamonds').querySelector('span'), value: diamondsCollected },
+    { element: document.getElementById('victoryBullets').querySelector('span'), value: bulletsFired },
+    { element: document.getElementById('victoryLives').querySelector('span'), value: Math.floor(player.lives) }
+  ];
+  stats.forEach((stat, index) => {
+    setTimeout(() => {
+      stat.element.parentElement.classList.add('show');
+      let current = 0;
+      const increment = stat.value / 50;
+      const counter = setInterval(() => {
+        current += increment;
+        if (current >= stat.value) { current = stat.value; clearInterval(counter); }
+        stat.element.innerText = Math.floor(current);
+      }, 20);
+    }, index * 300);
+  });
+}
+
+function updateHighScore() {
+  const highScore = localStorage.getItem('highScore') || 0;
+  if (score > highScore) localStorage.setItem('highScore', score);
+  document.getElementById('highScore').innerText = localStorage.getItem('highScore');
+}
+
+function showMenu() {
+  gameRunning = false;
+  document.getElementById('menuScreen').style.display = 'block';
+  document.getElementById('menuScreen').classList.add('show');
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('victoryScreen').style.display = 'none';
+  document.getElementById('bossMenu').style.display = 'none';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('shop').style.display = 'none';
+  document.getElementById('bossHealthBar').style.display = 'none';
+  updateHighScore();
+}
+
+function showBossMenu() {
+  document.getElementById('menuScreen').style.display = 'none';
+  document.getElementById('bossMenu').style.display = 'block';
+  document.getElementById('bossMenu').classList.add('show');
+}
+
+function startGame(mode) {
+  currentMode = mode;
+  gameRunning = true;
+  score = 0;
+  wave = 1;
+  kills = 0;
+  player.lives = (mode === 'hard' ? 2 : 3);
+  player.x = canvas.width / 2 - 25;
+  player.y = canvas.height - 80;
+  player.shield = false;
+  player.doubleShoot = false;
+  player.armor = false;
+  player.regenActive = false;
+  player.overdrive = false;
+  player.laserActive = false;
+  player.forceFieldActive = false;
+  shootDelay = (mode === 'hard' ? 500 : 400);
+  shieldCooldown = 0;
+  regenTimer = 0;
+  laserTimer = 0;
+  waveTimer = 0;
+  gameTimer = 0;
+  damageDealt = 0;
+  diamondsCollected = 0;
+  bulletsFired = 0;
+  survivalDamage = 0;
+  bullets = [];
+  enemies = [];
+  explosions = [];
+  enemyAttacks = [];
+  points = [];
+  achievementsUnlocked.length = 0;
+  document.getElementById('menuScreen').style.display = 'none';
+  document.getElementById('bossMenu').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('shop').style.display = 'block';
+  document.getElementById('armor').style.display = mode === 'hard' ? 'block' : 'none';
+  document.getElementById('fastShield').style.display = mode === 'hard' ? 'block' : 'none';
+  document.getElementById('overdrive').style.display = mode === 'hard' ? 'block' : 'none';
+  document.getElementById('laser').style.display = mode === 'hard' ? 'block' : 'none';
+  document.getElementById('regen').style.display = mode === 'survival' ? 'block' : 'none';
+  document.getElementById('bomb').style.display = mode === 'survival' ? 'block' : 'none';
+  document.getElementById('forceField').style.display = mode === 'survival' ? 'block' : 'none';
+  document.getElementById('shockwave').style.display = mode === 'survival' ? 'block' : 'none';
+  spawnWave();
+}
+
+function startBossGame(bossType) {
+  currentMode = 'bosses';
+  gameRunning = true;
+  score = 0;
+  wave = 1;
+  kills = 0;
+  player.lives = 3;
+  player.x = canvas.width / 2 - 25;
+  player.y = canvas.height - 80;
+  player.shield = false;
+  player.doubleShoot = false;
+  player.armor = false;
+  player.regenActive = false;
+  player.overdrive = false;
+  player.laserActive = false;
+  player.forceFieldActive = false;
+  shootDelay = 400;
+  shieldCooldown = 0;
+  regenTimer = 0;
+  laserTimer = 0;
+  waveTimer = 0;
+  gameTimer = 0;
+  damageDealt = 0;
+  diamondsCollected = 0;
+  bulletsFired = 0;
+  survivalDamage = 0;
+  bullets = [];
+  enemies = [];
+  explosions = [];
+  enemyAttacks = [];
+  points = [];
+  achievementsUnlocked.length = 0;
+  document.getElementById('menuScreen').style.display = 'none';
+  document.getElementById('bossMenu').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('shop').style.display = 'block';
+  document.getElementById('bossHealthBar').style.display = 'block';
+  document.getElementById('armor').style.display = 'none';
+  document.getElementById('fastShield').style.display = 'none';
+  document.getElementById('overdrive').style.display = 'none';
+  document.getElementById('laser').style.display = 'none';
+  document.getElementById('regen').style.display = 'none';
+  document.getElementById('bomb').style.display = 'none';
+  document.getElementById('forceField').style.display = 'none';
+  document.getElementById('shockwave').style.display = 'none';
+  spawnBoss(bossType);
+}
+
+function gameLoop() {
+  if (gameRunning) { update(); draw(); }
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById('menuScreen').style.display = 'block';
+document.getElementById('menuScreen').classList.add('show');
+updateHighScore();
+gameLoop();
+</script>
+
+</body>
+</html>
