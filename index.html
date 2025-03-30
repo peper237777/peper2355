@@ -86,11 +86,11 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            background: radial-gradient(circle, #ffffff 50%, transparent 70%);
+            background: #ffffff; /* Jednolite białe tło w trybie jasnym */
             transition: background 0.3s ease;
         }
         body.dark-mode #kotlet-container {
-            background: radial-gradient(circle, #ffffff 50%, #1c1c1e 70%);
+            background: #1c1c1e; /* Jednolite ciemne tło w trybie ciemnym, bez gradientu */
         }
         #kotlet {
             width: 300px;
@@ -137,7 +137,7 @@
             transition: transform 0.2s ease, background 0.3s ease;
         }
         #shop-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.05 tailor-made);
             background: #005bb5;
         }
         body.dark-mode #shop-btn {
@@ -532,7 +532,7 @@
         <button id="close-shop">Zamknij</button>
     </div>
     <div id="achievements"></div>
-    <footer>2025 KOTLET.FUN</footer>
+    <footer>Copyright © 2025 KOTLET.FUN – Wszystkie prawa zastrzeżone.</footer>
     
     <script>
         // Przełącznik trybu ciemnego
@@ -1172,6 +1172,9 @@
         updateUpgrades();
         updateWorkersPopup();
         updateAchievementsPopup();
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
