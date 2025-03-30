@@ -1,6 +1,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klikaj Kotleta!</title>
     <style>
         * {
@@ -16,6 +17,11 @@
             min-height: 100vh;
             background: #ffffff;
             padding: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode {
+            background: #1c1c1e;
+            color: #ffffff;
         }
         .stats-container {
             background: #f5f5f5;
@@ -26,28 +32,44 @@
             max-width: 400px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease;
+        }
+        body.dark-mode .stats-container {
+            background: #2c2c2e;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         #score {
             font-size: 20px;
             font-weight: 600;
             color: #1a1a1a;
             margin: 5px 0;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, color 0.3s ease;
         }
         #score.update {
             transform: scale(1.1);
+        }
+        body.dark-mode #score {
+            color: #ffffff;
         }
         #level {
             font-size: 16px;
             font-weight: 500;
             color: #1a1a1a;
             margin: 5px 0;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode #level {
+            color: #ffffff;
         }
         #cps {
             font-size: 14px;
             font-weight: 500;
             color: #1a1a1a;
             margin: 5px 0;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode #cps {
+            color: #ffffff;
         }
         #combo {
             font-size: 14px;
@@ -55,7 +77,6 @@
             color: #e91e63;
             opacity: 0;
             transition: opacity 0.3s ease;
-            margin: 5px 0;
         }
         #kotlet-container {
             width: 90%;
@@ -65,6 +86,11 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            background: radial-gradient(circle, #ffffff 50%, transparent 70%);
+            transition: background 0.3s ease;
+        }
+        body.dark-mode #kotlet-container {
+            background: radial-gradient(circle, #ffffff 50%, #1c1c1e 70%);
         }
         #kotlet {
             width: 300px;
@@ -114,6 +140,12 @@
             transform: scale(1.05);
             background: #005bb5;
         }
+        body.dark-mode #shop-btn {
+            background: #0a84ff;
+        }
+        body.dark-mode #shop-btn:hover {
+            background: #007aff;
+        }
         #shop-popup {
             display: none;
             position: fixed;
@@ -129,6 +161,11 @@
             max-width: 400px;
             max-height: 80vh;
             overflow-y: auto;
+            transition: background 0.3s ease;
+        }
+        body.dark-mode #shop-popup {
+            background: #2c2c2e;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
         }
         #shop-popup h2 {
             font-size: 20px;
@@ -136,6 +173,10 @@
             color: #1a1a1a;
             text-align: center;
             margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode #shop-popup h2 {
+            color: #ffffff;
         }
         .tabs {
             display: flex;
@@ -151,12 +192,19 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease;
+            transition: background 0.3s ease, transform 0.2s ease, color 0.3s ease;
         }
         .tab-btn.active {
             background: #007aff;
             color: white;
             transform: scale(1.05);
+        }
+        body.dark-mode .tab-btn {
+            background: #3a3a3c;
+            color: #ffffff;
+        }
+        body.dark-mode .tab-btn.active {
+            background: #0a84ff;
         }
         .tab-content {
             display: none;
@@ -173,12 +221,20 @@
             justify-content: space-between;
             align-items: center;
             position: relative;
+            transition: background 0.3s ease;
+        }
+        body.dark-mode .upgrade, body.dark-mode .worker, body.dark-mode .achievement-item {
+            background: #3a3a3c;
         }
         .upgrade p, .worker p, .achievement-item p {
             margin: 0;
             font-size: 14px;
             font-weight: 500;
             color: #1a1a1a;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode .upgrade p, body.dark-mode .worker p, body.dark-mode .achievement-item p {
+            color: #ffffff;
         }
         .upgrade-btn, .worker-btn {
             padding: 6px 12px;
@@ -195,9 +251,18 @@
             transform: scale(1.05);
             background: #005bb5;
         }
+        body.dark-mode .upgrade-btn, body.dark-mode .worker-btn {
+            background: #0a84ff;
+        }
+        body.dark-mode .upgrade-btn:hover, body.dark-mode .worker-btn:hover {
+            background: #007aff;
+        }
         .upgrade-btn:disabled, .worker-btn:disabled {
             background: #cccccc;
             cursor: not-allowed;
+        }
+        body.dark-mode .upgrade-btn:disabled, body.dark-mode .worker-btn:disabled {
+            background: #636366;
         }
         #close-shop {
             display: block;
@@ -214,6 +279,12 @@
         }
         #close-shop:hover {
             background: #d32f2f;
+        }
+        body.dark-mode #close-shop {
+            background: #ff453a;
+        }
+        body.dark-mode #close-shop:hover {
+            background: #ff3b30;
         }
         #achievements {
             margin: 20px 0;
@@ -239,6 +310,11 @@
             gap: 8px;
             z-index: 2000;
             animation: slideIn 0.5s ease-out forwards, slideOut 0.5s ease-in 3s forwards;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode .achievement-notification {
+            background: #2c2c2e;
+            color: #ffffff;
         }
         .achievement-notification::before {
             content: '🏆';
@@ -296,6 +372,10 @@
             margin-top: 20px;
             font-size: 12px;
             font-weight: 500;
+            color: #8e8e93;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode footer {
             color: #8e8e93;
         }
         @keyframes slideIn {
@@ -358,9 +438,60 @@
             80% { transform: translate(-20px, -10px); }
             100% { transform: translate(0, 0); opacity: 0; }
         }
+
+        /* Styl przełącznika trybu ciemnego */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 34px;
+            background: #e0e0e0;
+            border-radius: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 3px;
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+        .dark-mode-toggle.active {
+            background: #34c759;
+        }
+        .dark-mode-toggle .switch {
+            width: 28px;
+            height: 28px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .dark-mode-toggle.active .switch {
+            transform: translateX(26px);
+        }
+        @media (max-width: 768px) {
+            .dark-mode-toggle {
+                top: 10px;
+                right: 10px;
+                width: 50px;
+                height: 28px;
+            }
+            .dark-mode-toggle .switch {
+                width: 24px;
+                height: 24px;
+            }
+            .dark-mode-toggle.active .switch {
+                transform: translateX(22px);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Przełącznik trybu ciemnego -->
+    <div class="dark-mode-toggle" id="darkModeToggle">
+        <div class="switch"></div>
+    </div>
+
     <div class="stats-container">
         <div id="score">Wynik: 0</div>
         <div id="level">Poziom: 1</div>
@@ -368,7 +499,7 @@
         <div id="combo">Combo: x1.0</div>
     </div>
     <div id="kotlet-container">
-        <img id="kotlet" src="https://i.imgur.com/OuHU2Bf.jpeg" alt="Kotlet">
+        <img id="kotlet" src="https://i.imgur.com/wxNPdh8.png" alt="Kotlet">
     </div>
     <button id="shop-btn">SKLEP</button>
     <div id="shop-popup">
@@ -404,6 +535,20 @@
     <footer>Copyright © 2025 KOTLET.FUN – Wszystkie prawa zastrzeżone.</footer>
     
     <script>
+        // Przełącznik trybu ciemnego
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('click', () => {
+            darkModeToggle.classList.toggle('active');
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        });
+
+        // Wczytaj preferencję trybu ciemnego
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.classList.add('active');
+        }
+
         let score = 0;
         let displayedScore = 0;
         let level = 1;
@@ -609,7 +754,7 @@
             if (score % 20000 === 0 && score > 0) {
                 const miniKotlet = document.createElement('img');
                 miniKotlet.id = 'mini-kotlet';
-                miniKotlet.src = 'https://i.imgur.com/OuHU2Bf.jpeg';
+                miniKotlet.src = 'https://i.imgur.com/wxNPdh8.png';
                 miniKotlet.style.left = `${Math.random() * (kotletContainer.offsetWidth - 50)}px`;
                 miniKotlet.style.top = `${Math.random() * (kotletContainer.offsetHeight - 50)}px`;
                 kotletContainer.appendChild(miniKotlet);
@@ -1027,6 +1172,9 @@
         updateUpgrades();
         updateWorkersPopup();
         updateAchievementsPopup();
+    </script>
+</body>
+</html>
     </script>
 <html lang="pl">
 <head>
