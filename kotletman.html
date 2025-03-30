@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kotlet-Man</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 620px;
+            padding: 20px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        canvas {
+            margin: 0 auto;
+            background: #000;
+            width: 100%;
+            max-width: 560px;
+            height: auto;
+        }
+        .ui {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        .score {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .lives {
+            font-size: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ui">
+            <div class="score">Punkty: <span id="score">0</span></div>
+            <div class="lives">Życia: <span id="lives">3</span></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+
+        const tileSize = 20;
+        let score = 0;
+        let lives = 3;
+        let gameActive = true;
+
+        // Mapa dla trybu Klasycznego
+        const map = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
+            [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+            [1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+            [1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1],
+            [1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1],
+            [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        let mapWidth = map[0].length * tileSize;
+        let mapHeight = map.length * tileSize;
+
+        // Kotlet
+        let kotlet = {
+            x: 13 * tileSize,
+            y: 23 * tileSize,
+            size: 20,
+            speed: 2,
+            dx: 0,
+            dy: 0,
+            dotsEaten: 0,
+            ghostCollisions: 0
+        };
+
+        // Duchy
+        let ghosts = [
+            { x: 13 * tileSize, y: 11 * tileSize, dx: 1.5, dy: 0, color: 'red', speed: 1.5, baseSpeed: 1.5 },
+            { x: 14 * tileSize, y: 11 * tileSize, dx: -1.5, dy: 0, color: 'pink', speed: 1.5, baseSpeed: 1.5 },
+            { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 1.5, color: 'cyan', speed: 1.5, baseSpeed: 1.5 },
+            { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -1.5, color: 'orange', speed: 1.5, baseSpeed: 1.5 }
+        ];
+
+        let dots = [];
+        function resetDots() {
+            dots = [];
+            for(let y = 0; y < map.length; y++) {
+                for(let x = 0; x < map[y].length; x++) {
+                    if(map[y][x] === 0) {
+                        dots.push({ x: x * tileSize + tileSize/2, y: y * tileSize + tileSize/2, radius: 3 });
+                    }
+                }
+            }
+        }
+
+        // Rozpoczęcie gry
+        canvas.width = 560;
+        canvas.height = 620;
+        resetGame();
+        gameLoop();
+
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            kotlet = {
+                x: 13 * tileSize,
+                y: 23 * tileSize,
+                size: 20,
+                speed: 2,
+                dx: 0,
+                dy: 0,
+                dotsEaten: 0,
+                ghostCollisions: 0
+            };
+            ghosts = [
+                { x: 13 * tileSize, y: 11 * tileSize, dx: 1.5, dy: 0, color: 'red', speed: 1.5, baseSpeed: 1.5 },
+                { x: 14 * tileSize, y: 11 * tileSize, dx: -1.5, dy: 0, color: 'pink', speed: 1.5, baseSpeed: 1.5 },
+                { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 1.5, color: 'cyan', speed: 1.5, baseSpeed: 1.5 },
+                { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -1.5, color: 'orange', speed: 1.5, baseSpeed: 1.5 }
+            ];
+            resetDots();
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+            gameActive = true;
+        }
+
+        // Sterowanie WSAD
+        document.addEventListener('keydown', (e) => {
+            if(!gameActive) return;
+            switch(e.key.toLowerCase()) {
+                case 'w': kotlet.dx = 0; kotlet.dy = -kotlet.speed; break;
+                case 's': kotlet.dx = 0; kotlet.dy = kotlet.speed; break;
+                case 'a': kotlet.dx = -kotlet.speed; kotlet.dy = 0; break;
+                case 'd': kotlet.dx = kotlet.speed; kotlet.dy = 0; break;
+            }
+        });
+
+        // Rysowanie
+        function drawMap() {
+            for(let y = 0; y < map.length; y++) {
+                for(let x = 0; x < map[y].length; x++) {
+                    if(map[y][x] === 1) {
+                        ctx.fillStyle = '#0000FF';
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    }
+                }
+            }
+        }
+
+        function drawKotlet() {
+            const drawX = kotlet.x - kotlet.size / 2;
+            const drawY = kotlet.y - kotlet.size / 2;
+            ctx.font = `${kotlet.size}px Arial`;
+            ctx.fillText('🥩', drawX, drawY + kotlet.size);
+        }
+
+        function drawDots() {
+            dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFD700';
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function drawGhosts() {
+            ghosts.forEach(ghost => {
+                ctx.beginPath();
+                ctx.arc(ghost.x, ghost.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = ghost.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // Kolizje
+        function checkCollision(x, y) {
+            const mapX = Math.floor(x / tileSize);
+            const mapY = Math.floor(y / tileSize);
+            if(mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) return true;
+            return map[mapY][mapX] === 1;
+        }
+
+        // Aktualizacja gry
+        function updateKotlet() {
+            const newX = kotlet.x + kotlet.dx;
+            const newY = kotlet.y + kotlet.dy;
+            if(!checkCollision(newX, newY)) {
+                kotlet.x = newX;
+                kotlet.y = newY;
+            }
+
+            dots = dots.filter(dot => {
+                let distance = Math.sqrt((kotlet.x - dot.x) ** 2 + (kotlet.y - dot.y) ** 2);
+                if(distance < kotlet.size/2 + dot.radius) {
+                    kotlet.dotsEaten++;
+                    score += 10;
+                    scoreElement.textContent = score;
+                    return false;
+                }
+                return true;
+            });
+
+            ghosts.forEach(ghost => {
+                let distance = Math.sqrt((kotlet.x - ghost.x) ** 2 + (kotlet.y - ghost.y) ** 2);
+                if(distance < kotlet.size/2 + 10) {
+                    lives--;
+                    livesElement.textContent = lives;
+                    kotlet.x = 13 * tileSize;
+                    kotlet.y = 23 * tileSize;
+                    kotlet.dx = 0;
+                    kotlet.dy = 0;
+                    kotlet.ghostCollisions++;
+                    score = Math.max(0, score - 50);
+                    scoreElement.textContent = score;
+                    if(lives <= 0) {
+                        gameActive = false;
+                        resetGame();
+                    }
+                }
+            });
+        }
+
+        function updateGhosts() {
+            ghosts.forEach(ghost => {
+                let newX = ghost.x + ghost.dx;
+                let newY = ghost.y + ghost.dy;
+
+                if(Math.random() < 0.05) {
+                    const directions = [
+                        { dx: ghost.speed, dy: 0 },
+                        { dx: -ghost.speed, dy: 0 },
+                        { dx: 0, dy: ghost.speed },
+                        { dx: 0, dy: -ghost.speed }
+                    ];
+                    const validDirections = directions.filter(dir => !checkCollision(ghost.x + dir.dx, ghost.y + dir.dy));
+                    if(validDirections.length > 0) {
+                        const newDir = validDirections[Math.floor(Math.random() * validDirections.length)];
+                        ghost.dx = newDir.dx;
+                        ghost.dy = newDir.dy;
+                    }
+                }
+
+                if(checkCollision(newX, newY)) {
+                    const directions = [
+                        { dx: ghost.speed, dy: 0 },
+                        { dx: -ghost.speed, dy: 0 },
+                        { dx: 0, dy: ghost.speed },
+                        { dx: 0, dy: -ghost.speed }
+                    ];
+                    const validDirections = directions.filter(dir => !checkCollision(ghost.x + dir.dx, ghost.y + dir.dy));
+                    if(validDirections.length > 0) {
+                        const newDir = validDirections[Math.floor(Math.random() * validDirections.length)];
+                        ghost.dx = newDir.dx;
+                        ghost.dy = newDir.dy;
+                    }
+                    newX = ghost.x + ghost.dx;
+                    newY = ghost.y + ghost.dy;
+                }
+
+                ghost.x = newX;
+                ghost.y = newY;
+            });
+        }
+
+        // Główna pętla gry
+        function gameLoop() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawMap();
+            drawDots();
+            drawKotlet();
+            drawGhosts();
+            updateKotlet();
+            updateGhosts();
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
