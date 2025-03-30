@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kotlet Breakout</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Zapobiega przewijaniu na telefonach */
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 800px;
+            max-height: 600px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #333;
+            font-size: clamp(14px, 2vw, 18px); /* Responsywna wielkość tekstu */
+            z-index: 10;
+        }
+        #shop {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 20;
+            width: 80%;
+            max-width: 300px;
+        }
+        #shop h2 {
+            font-size: clamp(16px, 3vw, 20px);
+            margin: 0 0 10px;
+        }
+        #shop button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: clamp(12px, 2vw, 16px);
+            width: 100%;
+        }
+        #shop button:hover {
+            transform: scale(1.05);
+        }
+        @media (max-width: 600px) {
+            #game-container {
+                border-radius: 0; /* Usunięcie rogów na małych ekranach */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui">Punkty: <span id="score">0</span> | Monety: <span id="coins">0</span> | Życia: <span id="lives">3</span></div>
+        <div id="shop">
+            <h2>Sklep</h2>
+            <button ontouchstart="buyUpgrade('speed')" onclick="buyUpgrade('speed')">Zwiększ prędkość (50 monet)</button>
+            <button ontouchstart="buyUpgrade('size')" onclick="buyUpgrade('size')">Większy kotlet (100 monet)</button>
+            <button ontouchstart="buyUpgrade('lives')" onclick="buyUpgrade('lives')">Dodatkowe życie (200 monet)</button>
+            <button ontouchstart="closeShop()" onclick="closeShop()">Zamknij</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Responsywne wymiary kanwy
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            paddle.y = canvas.height - 40;
+            resetKotlet();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let score = 0;
+        let coins = 0;
+        let lives = 3;
+        let level = 1;
+
+        const paddle = {
+            width: canvas.width / 8,
+            height: 20,
+            x: canvas.width / 2 - (canvas.width / 8) / 2,
+            y: canvas.height - 40,
+            speed: 7
+        };
+
+        const kotlet = {
+            x: canvas.width / 2,
+            y: canvas.height - 60,
+            radius: canvas.width / 40,
+            dx: 4,
+            dy: -4,
+            speed: 4,
+            image: new Image()
+        };
+        kotlet.image.src = 'https://via.placeholder.com/40?text=Kotlet'; // Placeholder dla kotleta
+
+        const bricks = [];
+        const brickRowCount = 5;
+        const brickColumnCount = Math.floor(canvas.width / 85); // Responsywna liczba kolumn
+        const brickWidth = (canvas.width - 70) / brickColumnCount - 10;
+        const brickHeight = 20;
+        const brickPadding = 10;
+        const brickOffsetTop = 30;
+        const brickOffsetLeft = 35;
+
+        let rightPressed = false;
+        let leftPressed = false;
+        let shopOpen = false;
+        let touchX = null;
+
+        // Inicjalizacja cegieł
+        function createBricks() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                bricks[c] = [];
+                for (let r = 0; r < brickRowCount; r++) {
+                    bricks[c][r] = { x: 0, y: 0, status: 1 };
+                }
+            }
+        }
+
+        // Sterowanie klawiaturą
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Right' || e.key === 'ArrowRight') rightPressed = true;
+            if (e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = true;
+            if (e.key === 's') toggleShop();
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Right' || e.key === 'ArrowRight') rightPressed = false;
+            if (e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = false;
+        });
+
+        // Sterowanie dotykowe
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX;
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const newTouchX = e.touches[0].clientX;
+            const deltaX = newTouchX - touchX;
+            paddle.x += deltaX * 0.1; // Płynniejszy ruch na telefonach
+            touchX = newTouchX;
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+        });
+        canvas.addEventListener('touchend', () => {
+            touchX = null;
+        });
+
+        // Rysowanie
+        function draw() {
+            if (shopOpen) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPaddle();
+            drawKotlet();
+            drawBricks();
+            collisionDetection();
+            moveKotlet();
+            movePaddle();
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('coins').textContent = coins;
+            document.getElementById('lives').textContent = lives;
+
+            if (lives <= 0) {
+                alert('Koniec gry! Wynik: ' + score);
+                resetGame();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
+            ctx.fillStyle = '#007aff';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawKotlet() {
+            ctx.drawImage(kotlet.image, kotlet.x - kotlet.radius, kotlet.y - kotlet.radius, kotlet.radius * 2, kotlet.radius * 2);
+        }
+
+        function drawBricks() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    if (bricks[c][r].status === 1) {
+                        const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                        const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                        ctx.fillStyle = `hsl(${c * 40}, 70%, 50%)`;
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function moveKotlet() {
+            kotlet.x += kotlet.dx;
+            kotlet.y += kotlet.dy;
+
+            if (kotlet.x + kotlet.radius > canvas.width || kotlet.x - kotlet.radius < 0) kotlet.dx = -kotlet.dx;
+            if (kotlet.y - kotlet.radius < 0) kotlet.dy = -kotlet.dy;
+            if (kotlet.y + kotlet.radius > canvas.height) {
+                lives--;
+                resetKotlet();
+            }
+
+            if (kotlet.y + kotlet.radius > paddle.y &&
+                kotlet.x > paddle.x && kotlet.x < paddle.x + paddle.width) {
+                kotlet.dy = -kotlet.dy;
+            }
+        }
+
+        function movePaddle() {
+            if (rightPressed && paddle.x < canvas.width - paddle.width) paddle.x += paddle.speed;
+            if (leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
+        }
+
+        function collisionDetection() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    const b = bricks[c][r];
+                    if (b.status === 1) {
+                        if (kotlet.x > b.x && kotlet.x < b.x + brickWidth &&
+                            kotlet.y > b.y && kotlet.y < b.y + brickHeight) {
+                            kotlet.dy = -kotlet.dy;
+                            b.status = 0;
+                            score += 10;
+                            coins += 5;
+                            if (score >= brickRowCount * brickColumnCount * 10) {
+                                levelUp();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function resetKotlet() {
+            kotlet.x = canvas.width / 2;
+            kotlet.y = canvas.height - 60;
+            kotlet.dx = kotlet.speed;
+            kotlet.dy = -kotlet.speed;
+        }
+
+        function levelUp() {
+            level++;
+            kotlet.speed += 0.5;
+            resetKotlet();
+            createBricks();
+        }
+
+        function resetGame() {
+            score = 0;
+            coins = 0;
+            lives = 3;
+            level = 1;
+            kotlet.speed = 4;
+            paddle.x = canvas.width / 2 - paddle.width / 2;
+            resetKotlet();
+            createBricks();
+        }
+
+        function toggleShop() {
+            shopOpen = !shopOpen;
+            document.getElementById('shop').style.display = shopOpen ? 'block' : 'none';
+        }
+
+        function buyUpgrade(type) {
+            if (type === 'speed' && coins >= 50) {
+                kotlet.speed += 1;
+                coins -= 50;
+            } else if (type === 'size' && coins >= 100) {
+                kotlet.radius += 5;
+                coins -= 100;
+            } else if (type === 'lives' && coins >= 200) {
+                lives++;
+                coins -= 200;
+            } else {
+                alert('Za mało monet!');
+            }
+        }
+
+        function closeShop() {
+            toggleShop();
+        }
+
+        createBricks();
+        draw();
+    </script>
+</body>
+</html>
