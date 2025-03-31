@@ -137,7 +137,7 @@
             transition: transform 0.2s ease, background 0.3s ease;
         }
         #shop-btn:hover {
-            transform: scale(1.05 tailor-made);
+            transform: scale(1.05);
             background: #005bb5;
         }
         body.dark-mode #shop-btn {
@@ -648,12 +648,12 @@
                 feverCount,
                 workerUpgradeCount
             };
-            localStorage.setItem('kotletClickerState', JSON.stringify(gameState));
+            localStorage.setItem('kotletClickerStateV2', JSON.stringify(gameState));
         }
 
         // Funkcja ładująca postęp
         function loadProgress() {
-            const savedState = localStorage.getItem('kotletClickerState');
+            const savedState = localStorage.getItem('kotletClickerStateV2');
             if (savedState) {
                 const gameState = JSON.parse(savedState);
                 score = gameState.score || 0;
@@ -1124,7 +1124,7 @@
             updateUpgrades();
             updateWorkersPopup();
             updateAchievementsPopup();
-            popupSound.play();
+            popupSound.play(), 'click';
         });
 
         closeShopBtn.addEventListener('click', () => {
