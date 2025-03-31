@@ -35,7 +35,10 @@
             width: 100%;
             height: 100%;
             display: none;
-            touch-action: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
 
         #menu, #gameOverScreen {
@@ -67,6 +70,8 @@
             border-radius: 2vw;
             font-size: 5vw;
             touch-action: manipulation;
+            z-index: 25;
+            position: relative;
         }
 
         #ui {
@@ -79,6 +84,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 2vw;
             display: none;
+            z-index: 10;
         }
 
         #shop {
@@ -93,6 +99,7 @@
             padding: 2vw;
             display: none;
             width: 90vw;
+            z-index: 10;
         }
 
         .shop-button {
@@ -105,6 +112,7 @@
             touch-action: manipulation;
             flex: 1;
             max-width: 25vw;
+            z-index: 15;
         }
 
         #notification {
@@ -129,6 +137,7 @@
             top: 80%;
             opacity: 0.8;
             display: none;
+            z-index: 5;
         }
 
         #waveDisplay {
@@ -141,6 +150,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 2vw;
             display: none;
+            z-index: 10;
         }
 
         #joystick {
@@ -152,6 +162,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             display: none;
+            z-index: 10;
         }
 
         #joystickKnob {
@@ -163,6 +174,7 @@
             transform: translate(-50%, -50%);
             top: 50%;
             left: 50%;
+            z-index: 15;
         }
     </style>
 </head>
@@ -173,24 +185,24 @@
         <div id="ui">Punkty: <span id="score">0</span> | Tarcza: <span id="shield">0</span></div>
         <div id="waveDisplay">Fala: <span id="wave">1</span></div>
         <div id="shop">
-            <button class="shop-button" onclick="upgradePower()">Moc +1 (50)</button>
-            <button class="shop-button" onclick="upgradeSpeed()">Szybkość +1 (75)</button>
-            <button class="shop-button" onclick="upgradeShield()">Tarcza +1 (100)</button>
-            <button class="shop-button" onclick="upgradeLasers()">Lasery +1 (150)</button>
+            <button class="shop-button" id="upgradePowerBtn">Moc +1 (50)</button>
+            <button class="shop-button" id="upgradeSpeedBtn">Szybkość +1 (75)</button>
+            <button class="shop-button" id="upgradeShieldBtn">Tarcza +1 (100)</button>
+            <button class="shop-button" id="upgradeLasersBtn">Lasery +1 (150)</button>
         </div>
         <div id="notification"></div>
         <div id="menu">
             <h1 style="font-size: 8vw;">Kotlet: Ostatni Bastion</h1>
             <p style="font-size: 5vw;">Rekord: <span id="highScore">0</span></p>
-            <button class="difficulty-button" onclick="startGame(0.01, 1)">Łatwy</button>
-            <button class="difficulty-button" onclick="startGame(0.015, 1.5)">Średni</button>
-            <button class="difficulty-button" onclick="startGame(0.02, 2)">Trudny</button>
+            <button class="difficulty-button" id="easyBtn">Łatwy</button>
+            <button class="difficulty-button" id="mediumBtn">Średni</button>
+            <button class="difficulty-button" id="hardBtn">Trudny</button>
         </div>
         <div id="gameOverScreen">
             <h1 style="font-size: 8vw;">Koniec Gry!</h1>
             <p style="font-size: 5vw;">Punkty: <span id="finalScore">0</span></p>
             <p style="font-size: 5vw;">Fala: <span id="finalWave">1</span></p>
-            <button class="retry-button" onclick="resetGame()">Spróbuj Ponownie</button>
+            <button class="retry-button" id="retryBtn">Spróbuj Ponownie</button>
         </div>
         <div id="joystick">
             <div id="joystickKnob"></div>
@@ -216,7 +228,16 @@
         const joystick = document.getElementById('joystick');
         const joystickKnob = document.getElementById('joystickKnob');
 
-        // Responsywne wymiary canvasu
+        // Przyciski
+        const easyBtn = document.getElementById('easyBtn');
+        const mediumBtn = document.getElementById('mediumBtn');
+        const hardBtn = document.getElementById('hardBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const upgradePowerBtn = document.getElementById('upgradePowerBtn');
+        const upgradeSpeedBtn = document.getElementById('upgradeSpeedBtn');
+        const upgradeShieldBtn = document.getElementById('upgradeShieldBtn');
+        const upgradeLasersBtn = document.getElementById('upgradeLasersBtn');
+
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -238,7 +259,6 @@
         };
         let chickens = [];
         let lasers = [];
-        let particles = [];
         let gameOver = true;
         let difficulty = 0.015;
         let difficultyMultiplier = 1;
@@ -246,7 +266,6 @@
         let enemiesToSpawn = 5;
         let enemiesSpawned = 0;
         let animationFrameId = null;
-        let bossSpawnTimer = 0;
         let joystickActive = false;
         let joystickX = 0;
         let joystickY = 0;
@@ -270,11 +289,9 @@
             kotlet = { x: canvas.width / 2, y: canvas.height - 50, speed: 5, laserPower: 1, shield: 0, extraLasers: 0 };
             chickens = [];
             lasers = [];
-            particles = [];
             scoreDisplay.textContent = score;
             shieldDisplay.textContent = kotlet.shield;
             waveDisplay.textContent = wave;
-            bossSpawnTimer = 0;
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             update();
         }
@@ -340,7 +357,6 @@
         function update() {
             if (gameOver) return;
 
-            // Ruch kotleta za pomocą joysticka
             if (joystickActive) {
                 const dx = joystickX - joystick.offsetLeft - joystick.offsetWidth / 2;
                 const dy = joystickY - joystick.offsetTop - joystick.offsetHeight / 2;
@@ -353,7 +369,6 @@
                 }
             }
 
-            // Spawn przeciwników
             if (enemiesSpawned < enemiesToSpawn) {
                 if (Math.random() < difficulty) spawnChicken();
             } else if (chickens.length === 0) {
@@ -363,7 +378,6 @@
                 waveDisplay.textContent = wave;
             }
 
-            // Aktualizacja laserów
             lasers.forEach((laser, i) => {
                 const dx = laser.targetX - laser.x;
                 const dy = laser.targetY - laser.y;
@@ -375,7 +389,6 @@
                 }
             });
 
-            // Aktualizacja przeciwników
             chickens.forEach((chicken, i) => {
                 chicken.y += chicken.speed;
                 chicken.angle += 0.1;
@@ -413,8 +426,6 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Rysuj kotleta
             ctx.save();
             ctx.translate(kotlet.x, kotlet.y);
             ctx.font = `${Math.min(canvas.width * 0.1, 40)}px Arial`;
@@ -428,7 +439,6 @@
             }
             ctx.restore();
 
-            // Rysuj lasery
             lasers.forEach(laser => {
                 ctx.save();
                 ctx.translate(laser.x, laser.y);
@@ -439,7 +449,6 @@
                 ctx.restore();
             });
 
-            // Rysuj kurczaki
             chickens.forEach(chicken => {
                 ctx.save();
                 ctx.translate(chicken.x, chicken.y);
@@ -502,7 +511,7 @@
             joystickKnob.style.top = `${joystickY}px`;
         }
 
-        // Strzelanie przez dotyk na ekranie
+        // Strzelanie
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (!gameOver) {
@@ -510,17 +519,52 @@
                 const touch = e.touches[0];
                 const x = touch.clientX - rect.left;
                 const y = touch.clientY - rect.top;
-                if (x > joystick.offsetWidth + 10) { // Unikanie strzelania w obszarze joysticka
+                if (x > joystick.offsetWidth + 10) {
                     shootLaser(x, y);
                 }
             }
         });
 
-        // Funkcje ulepszeń (bez zmian logiki)
-        function upgradePower() { if (score >= 50) { score -= 50; kotlet.laserPower++; } }
-        function upgradeSpeed() { if (score >= 75) { score -= 75; kotlet.speed += 0.5; } }
-        function upgradeShield() { if (score >= 100) { score -= 100; kotlet.shield++; shieldDisplay.textContent = kotlet.shield; } }
-        function upgradeLasers() { if (score >= 150) { score -= 150; kotlet.extraLasers++; } }
+        // Obsługa przycisków
+        easyBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startGame(0.01, 1);
+        });
+
+        mediumBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startGame(0.015, 1.5);
+        });
+
+        hardBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startGame(0.02, 2);
+        });
+
+        retryBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resetGame();
+        });
+
+        upgradePowerBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (score >= 50) { score -= 50; kotlet.laserPower++; }
+        });
+
+        upgradeSpeedBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (score >= 75) { score -= 75; kotlet.speed += 0.5; }
+        });
+
+        upgradeShieldBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (score >= 100) { score -= 100; kotlet.shield++; shieldDisplay.textContent = kotlet.shield; }
+        });
+
+        upgradeLasersBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (score >= 150) { score -= 150; kotlet.extraLasers++; }
+        });
     </script>
 </body>
 </html>
