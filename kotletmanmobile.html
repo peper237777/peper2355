@@ -12,7 +12,7 @@
             min-height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
-            touch-action: none; /* Zapobiega domyślnemu zachowaniu dotyku */
+            touch-action: none;
         }
         .container {
             width: 100%;
@@ -29,11 +29,15 @@
             height: auto;
         }
         .ui {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            right: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
             color: #fff;
+            z-index: 10;
         }
         .score {
             font-size: 20px;
@@ -45,13 +49,12 @@
         }
         #joystick {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
             width: 100px;
             height: 100px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             touch-action: none;
+            transition: all 0.1s ease-out;
         }
         #joystick-knob {
             position: absolute;
@@ -60,6 +63,7 @@
             background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
         }
     </style>
 </head>
@@ -83,7 +87,7 @@
         const joystick = document.getElementById('joystick');
         const knob = document.getElementById('joystick-knob');
 
-        const tileSize = 20;
+        const tileSize = 40; // Powiększenie mapy (było 20)
         let score = 0;
         let lives = 3;
         let gameActive = true;
@@ -129,8 +133,8 @@
         let kotlet = {
             x: 13 * tileSize,
             y: 23 * tileSize,
-            size: 20,
-            speed: 2,
+            size: 40, // Powiększenie kotleta (było 20)
+            speed: 4, // Zwiększona prędkość (było 2)
             dx: 0,
             dy: 0,
             dotsEaten: 0,
@@ -139,10 +143,10 @@
 
         // Duchy
         let ghosts = [
-            { x: 13 * tileSize, y: 11 * tileSize, dx: 1.5, dy: 0, color: 'red', speed: 1.5, baseSpeed: 1.5 },
-            { x: 14 * tileSize, y: 11 * tileSize, dx: -1.5, dy: 0, color: 'pink', speed: 1.5, baseSpeed: 1.5 },
-            { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 1.5, color: 'cyan', speed: 1.5, baseSpeed: 1.5 },
-            { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -1.5, color: 'orange', speed: 1.5, baseSpeed: 1.5 }
+            { x: 13 * tileSize, y: 11 * tileSize, dx: 3, dy: 0, color: 'red', speed: 3, baseSpeed: 3 },
+            { x: 14 * tileSize, y: 11 * tileSize, dx: -3, dy: 0, color: 'pink', speed: 3, baseSpeed: 3 },
+            { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 3, color: 'cyan', speed: 3, baseSpeed: 3 },
+            { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -3, color: 'orange', speed: 3, baseSpeed: 3 }
         ];
 
         let dots = [];
@@ -151,14 +155,14 @@
             for(let y = 0; y < map.length; y++) {
                 for(let x = 0; x < map[y].length; x++) {
                     if(map[y][x] === 0) {
-                        dots.push({ x: x * tileSize + tileSize/2, y: y * tileSize + tileSize/2, radius: 3 });
+                        dots.push({ x: x * tileSize + tileSize/2, y: y * tileSize + tileSize/2, radius: 6 }); // Powiększone kropki
                     }
                 }
             }
         }
 
         // Rozpoczęcie gry
-        canvas.width = 560;
+        canvas.width = 560; // Rozmiar okna gry
         canvas.height = 620;
         resetGame();
         gameLoop();
@@ -169,18 +173,18 @@
             kotlet = {
                 x: 13 * tileSize,
                 y: 23 * tileSize,
-                size: 20,
-                speed: 2,
+                size: 40,
+                speed: 4,
                 dx: 0,
                 dy: 0,
                 dotsEaten: 0,
                 ghostCollisions: 0
             };
             ghosts = [
-                { x: 13 * tileSize, y: 11 * tileSize, dx: 1.5, dy: 0, color: 'red', speed: 1.5, baseSpeed: 1.5 },
-                { x: 14 * tileSize, y: 11 * tileSize, dx: -1.5, dy: 0, color: 'pink', speed: 1.5, baseSpeed: 1.5 },
-                { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 1.5, color: 'cyan', speed: 1.5, baseSpeed: 1.5 },
-                { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -1.5, color: 'orange', speed: 1.5, baseSpeed: 1.5 }
+                { x: 13 * tileSize, y: 11 * tileSize, dx: 3, dy: 0, color: 'red', speed: 3, baseSpeed: 3 },
+                { x: 14 * tileSize, y: 11 * tileSize, dx: -3, dy: 0, color: 'pink', speed: 3, baseSpeed: 3 },
+                { x: 13 * tileSize, y: 12 * tileSize, dx: 0, dy: 3, color: 'cyan', speed: 3, baseSpeed: 3 },
+                { x: 14 * tileSize, y: 12 * tileSize, dx: 0, dy: -3, color: 'orange', speed: 3, baseSpeed: 3 }
             ];
             resetDots();
             scoreElement.textContent = score;
@@ -190,20 +194,30 @@
 
         // Joystick
         let joystickActive = false;
-        let joystickCenterX = joystick.offsetWidth / 2;
-        let joystickCenterY = joystick.offsetHeight / 2;
+        let joystickBaseX = 50; // Początkowa pozycja X joysticka
+        let joystickBaseY = canvas.height - 50; // Początkowa pozycja Y joysticka
         let touchId = null;
 
-        joystick.addEventListener('touchstart', (e) => {
+        joystick.style.left = `${joystickBaseX - 50}px`; // Początkowa pozycja joysticka
+        joystick.style.top = `${joystickBaseY - 50}px`;
+        knob.style.left = '50%';
+        knob.style.top = '50%';
+
+        document.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (!joystickActive && e.touches.length > 0) {
+                const touch = e.touches[0];
                 joystickActive = true;
-                touchId = e.touches[0].identifier;
-                updateJoystick(e.touches[0]);
+                touchId = touch.identifier;
+                joystickBaseX = touch.clientX - canvas.getBoundingClientRect().left;
+                joystickBaseY = touch.clientY - canvas.getBoundingClientRect().top;
+                joystick.style.left = `${joystickBaseX - 50}px`;
+                joystick.style.top = `${joystickBaseY - 50}px`;
+                updateJoystick(touch);
             }
         });
 
-        joystick.addEventListener('touchmove', (e) => {
+        document.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (joystickActive) {
                 for (let touch of e.touches) {
@@ -215,11 +229,13 @@
             }
         });
 
-        joystick.addEventListener('touchend', (e) => {
+        document.addEventListener('touchend', (e) => {
             e.preventDefault();
             for (let touch of e.changedTouches) {
                 if (touch.identifier === touchId) {
                     joystickActive = false;
+                    joystick.style.left = `${50 - 50}px`; // Wróć do początkowej pozycji
+                    joystick.style.top = `${canvas.height - 50 - 50}px`;
                     knob.style.left = '50%';
                     knob.style.top = '50%';
                     kotlet.dx = 0;
@@ -231,19 +247,19 @@
         });
 
         function updateJoystick(touch) {
-            const rect = joystick.getBoundingClientRect();
-            let dx = touch.clientX - rect.left - joystickCenterX;
-            let dy = touch.clientY - rect.top - joystickCenterY;
+            const rect = canvas.getBoundingClientRect();
+            let dx = touch.clientX - rect.left - joystickBaseX;
+            let dy = touch.clientY - rect.top - joystickBaseY;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDistance = joystick.offsetWidth / 2 - knob.offsetWidth / 2;
+            const maxDistance = 50; // Promień joysticka
 
             if (distance > maxDistance) {
                 dx = dx * maxDistance / distance;
                 dy = dy * maxDistance / distance;
             }
 
-            knob.style.left = `${joystickCenterX + dx}px`;
-            knob.style.top = `${joystickCenterY + dy}px`;
+            knob.style.left = `${50 + dx}px`;
+            knob.style.top = `${50 + dy}px`;
 
             const angle = Math.atan2(dy, dx);
             const speed = Math.min(distance / maxDistance, 1) * kotlet.speed;
@@ -251,39 +267,39 @@
             kotlet.dy = Math.sin(angle) * speed;
         }
 
-        // Rysowanie
-        function drawMap() {
+        // Rysowanie z kamerą śledzącą gracza
+        function drawMap(cameraX, cameraY) {
             for(let y = 0; y < map.length; y++) {
                 for(let x = 0; x < map[y].length; x++) {
                     if(map[y][x] === 1) {
                         ctx.fillStyle = '#0000FF';
-                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                        ctx.fillRect(x * tileSize - cameraX, y * tileSize - cameraY, tileSize, tileSize);
                     }
                 }
             }
         }
 
-        function drawKotlet() {
-            const drawX = kotlet.x - kotlet.size / 2;
-            const drawY = kotlet.y - kotlet.size / 2;
+        function drawKotlet(cameraX, cameraY) {
+            const drawX = kotlet.x - cameraX - kotlet.size / 2;
+            const drawY = kotlet.y - cameraY - kotlet.size / 2;
             ctx.font = `${kotlet.size}px Arial`;
             ctx.fillText('🥩', drawX, drawY + kotlet.size);
         }
 
-        function drawDots() {
+        function drawDots(cameraX, cameraY) {
             dots.forEach(dot => {
                 ctx.beginPath();
-                ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                ctx.arc(dot.x - cameraX, dot.y - cameraY, dot.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#FFD700';
                 ctx.fill();
                 ctx.closePath();
             });
         }
 
-        function drawGhosts() {
+        function drawGhosts(cameraX, cameraY) {
             ghosts.forEach(ghost => {
                 ctx.beginPath();
-                ctx.arc(ghost.x, ghost.y, 10, 0, Math.PI * 2);
+                ctx.arc(ghost.x - cameraX, ghost.y - cameraY, 20, 0, Math.PI * 2); // Powiększone duchy
                 ctx.fillStyle = ghost.color;
                 ctx.fill();
                 ctx.closePath();
@@ -305,6 +321,9 @@
             if(!checkCollision(newX, newY)) {
                 kotlet.x = newX;
                 kotlet.y = newY;
+            } else {
+                kotlet.dx = 0;
+                kotlet.dy = 0;
             }
 
             dots = dots.filter(dot => {
@@ -320,7 +339,7 @@
 
             ghosts.forEach(ghost => {
                 let distance = Math.sqrt((kotlet.x - ghost.x) ** 2 + (kotlet.y - ghost.y) ** 2);
-                if(distance < kotlet.size/2 + 10) {
+                if(distance < kotlet.size/2 + 20) {
                     lives--;
                     livesElement.textContent = lives;
                     kotlet.x = 13 * tileSize;
@@ -380,14 +399,19 @@
             });
         }
 
-        // Główna pętla gry
+        // Główna pętla gry z kamerą
         function gameLoop() {
             if(!gameActive) return;
+
+            // Kamera śledząca gracza
+            const cameraX = kotlet.x - canvas.width / 2;
+            const cameraY = kotlet.y - canvas.height / 2;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawMap();
-            drawDots();
-            drawKotlet();
-            drawGhosts();
+            drawMap(cameraX, cameraY);
+            drawDots(cameraX, cameraY);
+            drawKotlet(cameraX, cameraY);
+            drawGhosts(cameraX, cameraY);
             updateKotlet();
             updateGhosts();
             requestAnimationFrame(gameLoop);
