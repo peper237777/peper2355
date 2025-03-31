@@ -161,6 +161,7 @@
             text-decoration: none;
             opacity: 0.8;
             transition: opacity 0.3s ease;
+            cursor: pointer;
         }
 
         .back-to-desktop:hover {
@@ -295,8 +296,29 @@
 
     <footer>
         <div class="container">
-            <a href="#" class="back-to-desktop">Wróć do trybu komputerowego</a>
+            <a href="#" class="back-to-desktop" onclick="askForMode(event)">Wróć do trybu komputerowego</a>
         </div>
     </footer>
+
+    <script>
+        // Funkcja pytająca o wybór trybu
+        function askForMode(event) {
+            event.preventDefault();
+            const userChoice = confirm("Czy chcesz przełączyć się na tryb komputerowy?");
+            if (userChoice) {
+                // Przekierowanie na wersję komputerową (menugier.html na GitHubie)
+                window.location.href = "menugier.html";
+            }
+            // Jeśli użytkownik kliknie "Anuluj", pozostaje na stronie mobilnej
+        }
+
+        // Sprawdzanie trybu przy każdym załadowaniu strony
+        window.onload = function() {
+            const userChoice = confirm("Czy chcesz wyświetlić stronę w trybie komputerowym?");
+            if (userChoice) {
+                window.location.href = "https://twoj-username.github.io/twoj-repozytorium/menugier.html";
+            }
+        };
+    </script>
 </body>
 </html>
