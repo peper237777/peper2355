@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WordGuess: Kotlet</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f2f2f7;
+            font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Arial, sans-serif;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #000;
+            margin: 20px 0;
+            text-align: center;
+        }
+        p {
+            font-size: 18px;
+            color: #666;
+            margin: 10px 0;
+            text-align: center;
+        }
+        #menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        button {
+            background: #007aff;
+            color: #fff;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background: #005bb5;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 1px solid #d1d1d6;
+            border-radius: 10px;
+            box-sizing: border-box;
+            margin: 15px 0;
+            background: #fff;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        #game, #endScreen {
+            display: none;
+        }
+        #gameTitle {
+            font-size: 28px;
+            color: #000;
+        }
+        #hint {
+            font-size: 20px;
+            color: #333;
+            font-weight: 500;
+        }
+        #feedback {
+            font-size: 16px;
+            color: #ff3b30;
+        }
+        #score, #finalScore {
+            font-size: 18px;
+            font-weight: 600;
+            color: #007aff;
+        }
+        #stars {
+            font-size: 24px;
+            color: #ff9500;
+        }
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 28px;
+            }
+            button {
+                font-size: 16px;
+                padding: 12px;
+            }
+            input[type="text"] {
+                font-size: 16px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="menu">
+            <h1>WordGuess</h1>
+            <button onclick="startGame('kotletSchabowy')">Kotlet Schabowy</button>
+            <button onclick="startGame('kotletMielony')">Kotlet Mielony</button>
+            <button onclick="startGame('kotletKurczak')">Kotlet z Kurczaka</button>
+            <button onclick="startGame('kotletDeVolaille')">Kotlet De Volaille</button>
+            <button onclick="startGame('kotletRybny')">Kotlet Rybny</button>
+            <button onclick="startGame('kotletWegetarianski')">Kotlet Wegetariański</button>
+            <button onclick="startGame('frytki')">Frytki</button>
+            <button onclick="startGame('salatka')">Sałatka</button>
+            <button onclick="startGame('zupaPomidorowa')">Zupa Pomidorowa</button>
+            <button onclick="startGame('pierogi')">Pierogi</button>
+            <button onclick="startGame('deser')">Deser</button>
+            <button onclick="startGame('napoje')">Napoje</button>
+            <button onclick="startGame('sniadanie')">Śniadanie</button>
+        </div>
+        <div id="game">
+            <h1 id="gameTitle">Zgadnij słowo!</h1>
+            <p id="hint"></p>
+            <input type="text" id="guessInput" placeholder="Wpisz słowo" autocomplete="off">
+            <button id="submitGuess">Zgaduj</button>
+            <p id="feedback"></p>
+            <p id="score">Punkty: 0</p>
+        </div>
+        <div id="endScreen">
+            <h1>Koniec gry!</h1>
+            <p id="finalScore"></p>
+            <p id="stars"></p>
+            <button onclick="backToMenu()">Wróć do menu</button>
+        </div>
+    </div>
+
+    <script>
+        const wordLists = {
+            kotletSchabowy: [
+                { word: "mięso", hint: "Główny składnik kotleta" },
+                { word: "panierka", hint: "Chrupiąca otoczka" },
+                { word: "smażenie", hint: "Proces przygotowania" },
+                { word: "schab", hint: "Rodzaj mięsa" },
+                { word: "tłuczek", hint: "Narzędzie do rozbijania mięsa" }
+            ],
+            kotletMielony: [
+                { word: "mięso", hint: "Podstawa kotleta" },
+                { word: "bułka", hint: "Dodatek do masy" },
+                { word: "cebula", hint: "Często dodawana dla smaku" },
+                { word: "jajko", hint: "Łączy składniki" },
+                { word: "patelnia", hint: "Miejsce smażenia" }
+            ],
+            kotletKurczak: [
+                { word: "kurczak", hint: "Główny składnik" },
+                { word: "marynata", hint: "Dodaje smaku przed smażeniem" },
+                { word: "olej", hint: "Używasz go do smażenia" },
+                { word: "przyprawy", hint: "Poprawiają smak" },
+                { word: "grill", hint: "Alternatywa dla smażenia" }
+            ],
+            kotletDeVolaille: [
+                { word: "kurczak", hint: "Główny składnik" },
+                { word: "masło", hint: "Wypełnienie kotleta" },
+                { word: "czosnek", hint: "Często dodawany do masła" },
+                { word: "panierka", hint: "Chrupiąca otoczka" },
+                { word: "smażenie", hint: "Proces przygotowania" }
+            ],
+            kotletRybny: [
+                { word: "ryba", hint: "Główny składnik" },
+                { word: "dorsz", hint: "Popularny rodzaj ryby" },
+                { word: "bułka", hint: "Dodatek do masy" },
+                { word: "cytryna", hint: "Podaje się z kotletem" },
+                { word: "patelnia", hint: "Miejsce smażenia" }
+            ],
+            kotletWegetarianski: [
+                { word: "soczewica", hint: "Częsty składnik" },
+                { word: "kasza", hint: "Dodaje konsystencji" },
+                { word: "warzywa", hint: "Podstawa smaku" },
+                { word: "przyprawy", hint: "Poprawiają smak" },
+                { word: "smażenie", hint: "Proces przygotowania" }
+            ],
+            frytki: [
+                { word: "ziemniaki", hint: "Główny składnik" },
+                { word: "sól", hint: "Podstawowa przyprawa" },
+                { word: "olej", hint: "Do smażenia" },
+                { word: "frytkownica", hint: "Urządzenie do przygotowania" },
+                { word: "ketchup", hint: "Popularny dodatek" }
+            ],
+            salatka: [
+                { word: "sałata", hint: "Podstawa wielu sałatek" },
+                { word: "pomidor", hint: "Częsty składnik" },
+                { word: "ogórek", hint: "Dodaje chrupkości" },
+                { word: "sos", hint: "Łączy smaki" },
+                { word: "oliwa", hint: "Część dressingu" }
+            ],
+            zupaPomidorowa: [
+                { word: "pomidory", hint: "Główny składnik" },
+                { word: "makaron", hint: "Częsty dodatek" },
+                { word: "śmietana", hint: "Dodaje kremowości" },
+                { word: "bulion", hint: "Podstawa zupy" },
+                { word: "bazylia", hint: "Popularna przyprawa" }
+            ],
+            pierogi: [
+                { word: "ciasto", hint: "Podstawa pierogów" },
+                { word: "farsz", hint: "Wypełnienie" },
+                { word: "kapusta", hint: "Popularny składnik farszu" },
+                { word: "gotowanie", hint: "Proces przygotowania" },
+                { word: "masło", hint: "Polewa po ugotowaniu" }
+            ],
+            deser: [
+                { word: "ciasto", hint: "Popularny deser" },
+                { word: "lody", hint: "Chłodna słodkość" },
+                { word: "cukier", hint: "Podstawa smaku" },
+                { word: "owoce", hint: "Częsty dodatek" },
+                { word: "bita śmietana", hint: "Dekoracja" }
+            ],
+            napoje: [
+                { word: "woda", hint: "Najprostszy napój" },
+                { word: "sok", hint: "Owocowy napój" },
+                { word: "herbata", hint: "Ciepły napój" },
+                { word: "kawa", hint: "Poranny napój" },
+                { word: "cola", hint: "Gazowany napój" }
+            ],
+            sniadanie: [
+                { word: "jajka", hint: "Częsty składnik" },
+                { word: "chleb", hint: "Podstawa kanapek" },
+                { word: "szynka", hint: "Dodatek do kanapek" },
+                { word: "owsianka", hint: "Zdrowa opcja" },
+                { word: "mleko", hint: "Do picia lub płatków" }
+            ]
+        };
+
+        let currentWords = [];
+        let currentWordIndex = 0;
+        let score = 0;
+
+        function startGame(category) {
+            currentWords = wordLists[category];
+            currentWordIndex = 0;
+            score = 0;
+            document.getElementById("menu").style.display = "none";
+            document.getElementById("game").style.display = "block";
+            document.getElementById("endScreen").style.display = "none";
+            document.getElementById("gameTitle").innerText = `Zgadnij słowo! (${category})`;
+            updateScore();
+            loadWord();
+        }
+
+        function backToMenu() {
+            document.getElementById("game").style.display = "none";
+            document.getElementById("endScreen").style.display = "none";
+            document.getElementById("menu").style.display = "flex";
+            currentWordIndex = 0;
+            score = 0;
+        }
+
+        function loadWord() {
+            if (currentWordIndex >= currentWords.length) {
+                showEndScreen();
+                return;
+            }
+            document.getElementById("hint").innerText = currentWords[currentWordIndex].hint;
+            document.getElementById("guessInput").value = "";
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("guessInput").style.display = "block";
+            document.getElementById("submitGuess").style.display = "block";
+            document.getElementById("guessInput").focus();
+        }
+
+        document.getElementById("submitGuess").addEventListener("click", function() {
+            const guess = document.getElementById("guessInput").value.toLowerCase().trim();
+            if (guess === currentWords[currentWordIndex].word) {
+                document.getElementById("feedback").innerText = "Brawo! Poprawna odpowiedź!";
+                document.getElementById("feedback").style.color = "#34c759";
+                score += 10;
+                currentWordIndex++;
+                updateScore();
+                setTimeout(loadWord, 1000);
+            } else {
+                document.getElementById("feedback").innerText = "Spróbuj jeszcze raz!";
+                document.getElementById("feedback").style.color = "#ff3b30";
+                score -= 5;
+                updateScore();
+            }
+        });
+
+        document.getElementById("guessInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                document.getElementById("submitGuess").click();
+            }
+        });
+
+        function updateScore() {
+            document.getElementById("score").innerText = `Punkty: ${score}`;
+        }
+
+        function showEndScreen() {
+            document.getElementById("game").style.display = "none";
+            document.getElementById("endScreen").style.display = "block";
+            document.getElementById("finalScore").innerText = `Twój wynik: ${score} punktów`;
+            
+            let stars = 0;
+            if (score >= 50) {
+                stars = 3;
+            } else if (score >= 30) {
+                stars = 2;
+            } else if (score >= 10) {
+                stars = 1;
+            }
+            document.getElementById("stars").innerText = `Gwiazdki: ${"★".repeat(stars)}${"☆".repeat(3 - stars)}`;
+        }
+    </script>
+</body>
+</html>
