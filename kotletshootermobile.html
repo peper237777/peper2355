@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Kotlet: Ostatni Bastion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(180deg, #1c2526, #0a0a0a);
+            overflow: hidden;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: none;
+            touch-action: none;
+        }
+
+        #menu, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            z-index: 20;
+            padding: 5vw;
+        }
+
+        #gameOverScreen {
+            display: none;
+        }
+
+        .menu-button, .difficulty-button, .retry-button {
+            padding: 3vw 6vw;
+            margin: 2vw;
+            background: linear-gradient(45deg, #ff3b30, #ff9500);
+            color: #fff;
+            border: none;
+            border-radius: 2vw;
+            font-size: 5vw;
+            touch-action: manipulation;
+        }
+
+        #ui {
+            position: absolute;
+            top: 2vw;
+            left: 2vw;
+            color: #fff;
+            font-size: 4vw;
+            padding: 2vw 4vw;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2vw;
+            display: none;
+        }
+
+        #shop {
+            position: absolute;
+            bottom: 2vw;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2vw;
+            padding: 2vw;
+            display: none;
+            width: 90vw;
+        }
+
+        .shop-button {
+            padding: 2vw 4vw;
+            background: linear-gradient(45deg, #007aff, #00c6ff);
+            color: #fff;
+            border: none;
+            border-radius: 2vw;
+            font-size: 3.5vw;
+            touch-action: manipulation;
+            flex: 1;
+            max-width: 25vw;
+        }
+
+        #notification {
+            position: absolute;
+            top: -20vw;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 3vw 6vw;
+            border-radius: 2vw;
+            font-size: 4vw;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+
+        #redLine {
+            position: absolute;
+            width: 100%;
+            height: 0.5vw;
+            background: linear-gradient(90deg, #ff3b30, #ff9500);
+            top: 80%;
+            opacity: 0.8;
+            display: none;
+        }
+
+        #waveDisplay {
+            position: absolute;
+            top: 2vw;
+            right: 2vw;
+            color: #fff;
+            font-size: 4vw;
+            padding: 2vw 4vw;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2vw;
+            display: none;
+        }
+
+        #joystick {
+            position: absolute;
+            bottom: 25vw;
+            left: 5vw;
+            width: 20vw;
+            height: 20vw;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: none;
+        }
+
+        #joystickKnob {
+            position: absolute;
+            width: 10vw;
+            height: 10vw;
+            background: #ff9500;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas"></canvas>
+        <div id="redLine"></div>
+        <div id="ui">Punkty: <span id="score">0</span> | Tarcza: <span id="shield">0</span></div>
+        <div id="waveDisplay">Fala: <span id="wave">1</span></div>
+        <div id="shop">
+            <button class="shop-button" onclick="upgradePower()">Moc +1 (50)</button>
+            <button class="shop-button" onclick="upgradeSpeed()">Szybkość +1 (75)</button>
+            <button class="shop-button" onclick="upgradeShield()">Tarcza +1 (100)</button>
+            <button class="shop-button" onclick="upgradeLasers()">Lasery +1 (150)</button>
+        </div>
+        <div id="notification"></div>
+        <div id="menu">
+            <h1 style="font-size: 8vw;">Kotlet: Ostatni Bastion</h1>
+            <p style="font-size: 5vw;">Rekord: <span id="highScore">0</span></p>
+            <button class="difficulty-button" onclick="startGame(0.01, 1)">Łatwy</button>
+            <button class="difficulty-button" onclick="startGame(0.015, 1.5)">Średni</button>
+            <button class="difficulty-button" onclick="startGame(0.02, 2)">Trudny</button>
+        </div>
+        <div id="gameOverScreen">
+            <h1 style="font-size: 8vw;">Koniec Gry!</h1>
+            <p style="font-size: 5vw;">Punkty: <span id="finalScore">0</span></p>
+            <p style="font-size: 5vw;">Fala: <span id="finalWave">1</span></p>
+            <button class="retry-button" onclick="resetGame()">Spróbuj Ponownie</button>
+        </div>
+        <div id="joystick">
+            <div id="joystickKnob"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('gameContainer');
+        const notification = document.getElementById('notification');
+        const scoreDisplay = document.getElementById('score');
+        const shieldDisplay = document.getElementById('shield');
+        const waveDisplay = document.getElementById('wave');
+        const menu = document.getElementById('menu');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScore = document.getElementById('finalScore');
+        const finalWave = document.getElementById('finalWave');
+        const ui = document.getElementById('ui');
+        const shop = document.getElementById('shop');
+        const redLine = document.getElementById('redLine');
+        const highScoreDisplay = document.getElementById('highScore');
+        const joystick = document.getElementById('joystick');
+        const joystickKnob = document.getElementById('joystickKnob');
+
+        // Responsywne wymiary canvasu
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            kotlet.y = canvas.height - 50;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+        highScoreDisplay.textContent = highScore;
+        let kotlet = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            speed: 5,
+            laserPower: 1,
+            shield: 0,
+            extraLasers: 0
+        };
+        let chickens = [];
+        let lasers = [];
+        let particles = [];
+        let gameOver = true;
+        let difficulty = 0.015;
+        let difficultyMultiplier = 1;
+        let wave = 1;
+        let enemiesToSpawn = 5;
+        let enemiesSpawned = 0;
+        let animationFrameId = null;
+        let bossSpawnTimer = 0;
+        let joystickActive = false;
+        let joystickX = 0;
+        let joystickY = 0;
+
+        function startGame(diff, diffMultiplier) {
+            if (!gameOver) return;
+            difficulty = diff;
+            difficultyMultiplier = diffMultiplier;
+            menu.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'block';
+            shop.style.display = 'flex';
+            redLine.style.display = 'block';
+            waveDisplay.style.display = 'block';
+            joystick.style.display = 'block';
+            gameOver = false;
+            score = 0;
+            wave = 1;
+            enemiesToSpawn = 5;
+            enemiesSpawned = 0;
+            kotlet = { x: canvas.width / 2, y: canvas.height - 50, speed: 5, laserPower: 1, shield: 0, extraLasers: 0 };
+            chickens = [];
+            lasers = [];
+            particles = [];
+            scoreDisplay.textContent = score;
+            shieldDisplay.textContent = kotlet.shield;
+            waveDisplay.textContent = wave;
+            bossSpawnTimer = 0;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            update();
+        }
+
+        function resetGame() {
+            gameOverScreen.style.display = 'none';
+            menu.style.display = 'flex';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+            shop.style.display = 'none';
+            redLine.style.display = 'none';
+            waveDisplay.style.display = 'none';
+            joystick.style.display = 'none';
+            gameOver = true;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+
+        function spawnChicken() {
+            chickens.push({
+                x: Math.random() * (canvas.width - 40),
+                y: -40,
+                speed: (1 + Math.random() * 2) * difficultyMultiplier,
+                angle: 0,
+                hp: 10 * difficultyMultiplier,
+                size: Math.min(canvas.width * 0.08, 30),
+                emoji: '🐔',
+                points: 10
+            });
+            enemiesSpawned++;
+        }
+
+        function shootLaser(x, y) {
+            lasers.push({
+                x: kotlet.x,
+                y: kotlet.y,
+                speed: 15,
+                targetX: x,
+                targetY: y
+            });
+            for (let i = 0; i < kotlet.extraLasers; i++) {
+                lasers.push({
+                    x: kotlet.x + (i + 1) * 20,
+                    y: kotlet.y,
+                    speed: 15,
+                    targetX: x + (i + 1) * 20,
+                    targetY: y
+                });
+                lasers.push({
+                    x: kotlet.x - (i + 1) * 20,
+                    y: kotlet.y,
+                    speed: 15,
+                    targetX: x - (i + 1) * 20,
+                    targetY: y
+                });
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            // Ruch kotleta za pomocą joysticka
+            if (joystickActive) {
+                const dx = joystickX - joystick.offsetLeft - joystick.offsetWidth / 2;
+                const dy = joystickY - joystick.offsetTop - joystick.offsetHeight / 2;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = joystick.offsetWidth / 2;
+                if (distance > 0) {
+                    const moveX = (dx / distance) * kotlet.speed;
+                    kotlet.x += moveX;
+                    kotlet.x = Math.max(30, Math.min(canvas.width - 30, kotlet.x));
+                }
+            }
+
+            // Spawn przeciwników
+            if (enemiesSpawned < enemiesToSpawn) {
+                if (Math.random() < difficulty) spawnChicken();
+            } else if (chickens.length === 0) {
+                wave++;
+                enemiesToSpawn = Math.floor(5 + wave * 2 * difficultyMultiplier);
+                enemiesSpawned = 0;
+                waveDisplay.textContent = wave;
+            }
+
+            // Aktualizacja laserów
+            lasers.forEach((laser, i) => {
+                const dx = laser.targetX - laser.x;
+                const dy = laser.targetY - laser.y;
+                const angle = Math.atan2(dy, dx);
+                laser.x += Math.cos(angle) * laser.speed;
+                laser.y += Math.sin(angle) * laser.speed;
+                if (laser.y < 0 || laser.y > canvas.height || laser.x < 0 || laser.x > canvas.width) {
+                    lasers.splice(i, 1);
+                }
+            });
+
+            // Aktualizacja przeciwników
+            chickens.forEach((chicken, i) => {
+                chicken.y += chicken.speed;
+                chicken.angle += 0.1;
+                if (chicken.y > canvas.height * 0.8) {
+                    if (kotlet.shield > 0) {
+                        kotlet.shield--;
+                        shieldDisplay.textContent = kotlet.shield;
+                        chickens.splice(i, 1);
+                    } else {
+                        gameOver = true;
+                        finalScore.textContent = score;
+                        finalWave.textContent = wave;
+                        gameOverScreen.style.display = 'flex';
+                        return;
+                    }
+                }
+
+                lasers.forEach((laser, j) => {
+                    if (Math.hypot(laser.x - chicken.x, laser.y - chicken.y) < chicken.size / 2 + 5) {
+                        chicken.hp -= kotlet.laserPower * 10;
+                        lasers.splice(j, 1);
+                        if (chicken.hp <= 0) {
+                            chickens.splice(i, 1);
+                            score += chicken.points;
+                        }
+                        return;
+                    }
+                });
+            });
+
+            draw();
+            scoreDisplay.textContent = score;
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Rysuj kotleta
+            ctx.save();
+            ctx.translate(kotlet.x, kotlet.y);
+            ctx.font = `${Math.min(canvas.width * 0.1, 40)}px Arial`;
+            ctx.fillText('🥩', -20, 10);
+            if (kotlet.shield > 0) {
+                ctx.strokeStyle = `rgba(0, 255, 255, ${kotlet.shield / 5})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 30, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Rysuj lasery
+            lasers.forEach(laser => {
+                ctx.save();
+                ctx.translate(laser.x, laser.y);
+                ctx.fillStyle = `hsl(${Date.now() % 360}, 100%, 70%)`;
+                ctx.beginPath();
+                ctx.arc(0, 0, 5 * Math.min(kotlet.laserPower, 5), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Rysuj kurczaki
+            chickens.forEach(chicken => {
+                ctx.save();
+                ctx.translate(chicken.x, chicken.y);
+                ctx.rotate(Math.sin(chicken.angle) * 0.2);
+                ctx.font = `${chicken.size}px Arial`;
+                ctx.fillText(chicken.emoji, -chicken.size / 2, chicken.size / 2);
+                ctx.restore();
+            });
+        }
+
+        // Obsługa joysticka
+        let touchId = null;
+        joystick.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!touchId) {
+                touchId = e.changedTouches[0].identifier;
+                joystickActive = true;
+                updateJoystick(e.changedTouches[0]);
+            }
+        });
+
+        joystick.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === touchId) {
+                    updateJoystick(touch);
+                    break;
+                }
+            }
+        });
+
+        joystick.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === touchId) {
+                    joystickActive = false;
+                    touchId = null;
+                    joystickKnob.style.left = '50%';
+                    joystickKnob.style.top = '50%';
+                    break;
+                }
+            }
+        });
+
+        function updateJoystick(touch) {
+            const rect = joystick.getBoundingClientRect();
+            joystickX = touch.clientX - rect.left;
+            joystickY = touch.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const dx = joystickX - centerX;
+            const dy = joystickY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = rect.width / 2;
+            if (distance > maxDistance) {
+                joystickX = centerX + (dx / distance) * maxDistance;
+                joystickY = centerY + (dy / distance) * maxDistance;
+            }
+            joystickKnob.style.left = `${joystickX}px`;
+            joystickKnob.style.top = `${joystickY}px`;
+        }
+
+        // Strzelanie przez dotyk na ekranie
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameOver) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                if (x > joystick.offsetWidth + 10) { // Unikanie strzelania w obszarze joysticka
+                    shootLaser(x, y);
+                }
+            }
+        });
+
+        // Funkcje ulepszeń (bez zmian logiki)
+        function upgradePower() { if (score >= 50) { score -= 50; kotlet.laserPower++; } }
+        function upgradeSpeed() { if (score >= 75) { score -= 75; kotlet.speed += 0.5; } }
+        function upgradeShield() { if (score >= 100) { score -= 100; kotlet.shield++; shieldDisplay.textContent = kotlet.shield; } }
+        function upgradeLasers() { if (score >= 150) { score -= 150; kotlet.extraLasers++; } }
+    </script>
+</body>
+</html>
