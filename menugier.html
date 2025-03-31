@@ -1,180 +1,8 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <!DOCTYPE html>
-<html lang="pl">
-<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOTLET.FUN</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f7;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Rozmycie tła */
-        .blur-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            backdrop-filter: blur(8px);
-            background: rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 999;
-        }
-
-        .blur-background.active {
-            opacity: 1;
-        }
-
-        /* Styl popupu */
-        .popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 18px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            z-index: 1000;
-        }
-
-        .popup.active {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
-
-        .popup h2 {
-            font-size: 24px;
-            font-weight: 600;
-            margin: 0 0 10px;
-            color: #1d1d1f;
-        }
-
-        .popup p {
-            font-size: 16px;
-            color: #6e6e73;
-            margin: 0 0 20px;
-        }
-
-        /* Przyciski */
-        .buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .popup button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-yes {
-            background: #0071e3;
-            color: white;
-        }
-
-        .btn-yes:hover {
-            background: #0077ed;
-        }
-
-        .btn-no {
-            background: #e8e8ed;
-            color: #1d1d1f;
-        }
-
-        .btn-no:hover {
-            background: #d2d2d7;
-        }
-
-        /* Responsywność */
-        @media (max-width: 480px) {
-            .popup {
-                width: 85%;
-                padding: 15px;
-            }
-
-            .popup h2 {
-                font-size: 20px;
-            }
-
-            .popup p {
-                font-size: 14px;
-            }
-
-            .popup button {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Przykładowa zawartość strony -->
-    <div class="content">
-        <h1></h1>
-        <p></p>
-    </div>
-
-    <!-- Popup -->
-    <div class="blur-background"></div>
-    <div class="popup">
-        <h2>Wersja mobilna</h2>
-        <p>Strona jest dostępna w specjalnej wersji na urządzenia mobilne. Czy chcesz do niej przejść?</p>
-        <div class="buttons">
-            <button class="btn-yes" onclick="goToMobile()">Tak</button>
-            <button class="btn-no" onclick="closePopup()">Nie</button>
-        </div>
-    </div>
-
-    <script>
-        // Pokaż popup przy załadowaniu strony
-        window.onload = function() {
-            document.querySelector('.blur-background').classList.add('active');
-            document.querySelector('.popup').classList.add('active');
-        };
-
-       // Przejdź do wersji mobilnej z relative path
-        function goToMobile() {
-            window.location.href = "menugiermobile.html";
-        
-        }
-
-        // Zamknij popup
-        function closePopup() {
-            document.querySelector('.blur-background').classList.remove('active');
-            document.querySelector('.popup').classList.remove('active');
-            setTimeout(() => {
-                document.querySelector('.blur-background').style.display = 'none';
-                document.querySelector('.popup').style.display = 'none';
-            }, 300); // Dopasowane do czasu animacji
-        }
-    </script>
-</body>
-</html>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>KOTLET.FUN</title>
     <style>
         * {
@@ -182,92 +10,177 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            background: #f5f5f7;
-            color: #1d1d1f;
-            line-height: 1.4;
+            background: #fafafa;
+            color: #000000;
+            line-height: 1.5;
             overflow-x: hidden;
+            min-height: 100vh;
+            overscroll-behavior: none;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 390px; /* iPhone 14 Pro width */
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 16px;
         }
 
         header {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
+            padding-top: env(safe-area-inset-top);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .header-content {
-            padding: 15px 0;
+            padding: 12px 0;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
         }
 
         .logo {
-            color: white;
-            font-size: 24px;
-            font-weight: 600;
+            color: #000000;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             text-decoration: none;
+        }
+
+        .games-section {
+            padding: 60px 0 40px;
+        }
+
+        .section-title {
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.8px;
+            padding-left: 16px;
         }
 
         .games-grid {
-            padding: 100px 0 60px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .game-card {
-            background: white;
+            background: #ffffff;
             border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             text-decoration: none;
-            color: #1d1d1f;
+            color: #000000;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 10px;
         }
 
         .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: scale(1.02);
         }
 
         .game-image {
-            width: 100%;
-            height: 200px;
+            width: 100px;
+            height: 100px;
+            border-radius: 14px;
             object-fit: cover;
+            flex-shrink: 0;
         }
 
         .game-info {
-            padding: 20px;
-            text-align: center;
+            padding: 0 12px;
+            flex-grow: 1;
         }
 
         .game-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .game-desc {
             font-size: 14px;
             color: #6e6e73;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        @media (max-width: 768px) {
-            .games-grid {
-                grid-template-columns: 1fr;
-                padding: 80px 20px 40px;
+        .get-button {
+            background: #007aff;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-right: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .get-button:hover {
+            background: #0066cc;
+        }
+
+        /* iPhone Adjustments */
+        @media (max-width: 430px) {
+            .section-title {
+                font-size: 28px;
+                margin-bottom: 16px;
+            }
+
+            .game-card {
+                padding: 8px;
+            }
+
+            .game-image {
+                width: 80px;
+                height: 80px;
+                border-radius: 12px;
+            }
+
+            .game-title {
+                font-size: 16px;
+            }
+
+            .game-desc {
+                font-size: 13px;
+            }
+
+            .get-button {
+                padding: 5px 10px;
+                font-size: 13px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .games-section {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Safe Area Support */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
             }
         }
     </style>
@@ -275,59 +188,68 @@
 <body>
     <header>
         <div class="container header-content">
-            <a href="#" class="logo">INNE GRY - KOTLET.FUN (tylko PC)</a>
+            <a href="#" class="logo">KOTLET.FUN</a>
         </div>
     </header>
 
     <main>
-        <div class="container games-grid">
-            <a href="/kotletshooter.html" class="game-card">
-                <img src="https://i.imgur.com/JZ9zLQP.png" class="game-image" alt="Kotlet Schabowy">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet Shooter</h2>
-                    <p class="game-desc">Zniszcz złe kurczaki i bossy!</p>
-                </div>
-            </a>
+        <div class="container games-section">
+            <h1 class="section-title">Gry</h1>
+            <div class="games-grid">
+                <a href="/kotletshooter.html" class="game-card">
+                    <img src="https://i.imgur.com/JZ9zLQP.png" class="game-image" alt="Kotlet Schabowy">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet Shooter</h2>
+                        <p class="game-desc">Zniszcz złe kurczaki i bossy!</p>
+                    </div>
+                    <span class="get-button">Pobierz</span>
+                </a>
 
-            <a href="/kotletman.html" class="game-card">
-                <img src="https://i.imgur.com/Shqx1BQ.png" class="game-image" alt="Kotlet Mielony">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet MAN</h2>
-                    <p class="game-desc">Zagraj w klasyczną grę w stylu PAC-MANA.</p>
-                </div>
-            </a>
+                <a href="/kotletman.html" class="game-card">
+                    <img src="https://i.imgur.com/Shqx1BQ.png" class="game-image" alt="Kotlet Mielony">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet MAN</h2>
+                        <p class="game-desc">Zagraj w klasyczną grę w stylu PAC-MANA.</p>
+                    </div>
+                    <span class="get-button">Pobierz</span>
+                </a>
 
-            <a href="/kotletspace.html" class="game-card">
-                <img src="https://i.imgur.com/9CciGoP.png" class="game-image" alt="Kotlet Drobiowy">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet Space</h2>
-                    <p class="game-desc">Najlepszy kosmiczny kotlet na świecie.</p>
-                </div>
-            </a>
+                <a href="/kotletspace.html" class="game-card">
+                    <img src="https://i.imgur.com/9CciGoP.png" class="game-image" alt="Kotlet Drobiowy">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet Space</h2>
+                        <p class="game-desc">Najlepszy kosmiczny kotlet na świecie.</p>
+                    </div>
+                    <span class="get-button">Pobierz</span>
+                </a>
 
-            <a href="/kotletmatch.html" class="game-card">
-                <img src="https://i.imgur.com/UK1RVv4.jpeg" class="game-image" alt="Kotlet Rybny">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet Match</h2>
-                    <p class="game-desc">WordGuess w kotletowym stylu!</p>
-                </div>
-            </a>
+                <a href="/kotletmatch.html" class="game-card">
+                    <img src="https://i.imgur.com/UK1RVv4.jpeg" class="game-image" alt="Kotlet Rybny">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet Match</h2>
+                        <p class="game-desc">WordGuess w kotletowym stylu!</p>
+                    </div>
+                    <span class="get-button">Pobierz</span>
+                </a>
 
-            <a href="/kotletclickerpro.html" class="game-card">
-                <img src="https://i.imgur.com/LeZRfUJ.jpeg" class="game-image" alt="Kotlet Wegański">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet Clicker SIMPLE EDITION</h2>
-                    <p class="game-desc">Najprostszy i jedyny w swoim rodzaju clicker!</p>
-                </div>
-            </a>
+                <a href="/kotletclickerpro.html" class="game-card">
+                    <img src="https://i.imgur.com/LeZRfUJ.jpeg" class="game-image" alt="Kotlet Wegański">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet Clicker</h2>
+                        <p class="game-desc">Najprostszy i jedyny w swoim rodzaju clicker!</p>
+                    </div>
+                    <span class="get-button">Pobierz</span>
+                </a>
 
-            <a href="/breakout.html" class="game-card">
-                <img src="https://i.imgur.com/BtSX1sE.jpeg" class="game-image" alt="Kotlet Jaglany">
-                <div class="game-info">
-                    <h2 class="game-title">Kotlet Breakout (POWSTAJE)</h2>
-                    <p class="game-desc">Rozbijaj cegły rzucając kotletem!</p>
-                </div>
-            </a>
+                <a href="/breakout.html" class="game-card">
+                    <img src="https://i.imgur.com/BtSX1sE.jpeg" class="game-image" alt="Kotlet Jaglany">
+                    <div class="game-info">
+                        <h2 class="game-title">Kotlet Breakout</h2>
+                        <p class="game-desc">Rozbijaj cegły rzucając kotletem!</p>
+                    </div>
+                    <span class="get-button">Wkrótce</span>
+                </a>
+            </div>
         </div>
     </main>
 </body>
