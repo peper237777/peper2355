@@ -86,11 +86,11 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            background: #ffffff; /* Jednolite białe tło w trybie jasnym */
+            background: #ffffff;
             transition: background 0.3s ease;
         }
         body.dark-mode #kotlet-container {
-            background: #1c1c1e; /* Jednolite ciemne tło w trybie ciemnym, bez gradientu */
+            background: #1c1c1e;
         }
         #kotlet {
             width: 300px;
@@ -438,8 +438,6 @@
             80% { transform: translate(-20px, -10px); }
             100% { transform: translate(0, 0); opacity: 0; }
         }
-
-        /* Styl przełącznika trybu ciemnego */
         .dark-mode-toggle {
             position: fixed;
             top: 20px;
@@ -487,11 +485,9 @@
     </style>
 </head>
 <body>
-    <!-- Przełącznik trybu ciemnego -->
     <div class="dark-mode-toggle" id="darkModeToggle">
         <div class="switch"></div>
     </div>
-
     <div class="stats-container">
         <div id="score">Wynik: 0</div>
         <div id="level">Poziom: 1</div>
@@ -533,9 +529,8 @@
     </div>
     <div id="achievements"></div>
     <footer>Copyright © 2025 KOTLET.FUN – Wszystkie prawa zastrzeżone.</footer>
-    
+
     <script>
-        // Przełącznik trybu ciemnego
         const darkModeToggle = document.getElementById('darkModeToggle');
         darkModeToggle.addEventListener('click', () => {
             darkModeToggle.classList.toggle('active');
@@ -543,7 +538,6 @@
             localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
         });
 
-        // Wczytaj preferencję trybu ciemnego
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
             darkModeToggle.classList.add('active');
@@ -565,12 +559,6 @@
         let miniKotletCount = 0;
         let feverCount = 0;
         let workerUpgradeCount = 0;
-
-        // Dźwięki w formacie base64 (subtelne)
-        const clickSound = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSQAAAAA');
-        const purchaseSound = new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSgAAAAA');
-        const achievementSound = new Audio('data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YS0AAAAA');
-        const popupSound = new Audio('data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSUAAAAA');
 
         let upgrades = {
             multiplier: { level: 0, cost: 3500, value: 1 },
@@ -629,7 +617,6 @@
         const achievementsList = document.getElementById('achievements-list');
         const achievementsContainer = document.getElementById('achievements');
 
-        // Funkcja zapisująca postęp
         function saveProgress() {
             const gameState = {
                 score,
@@ -648,7 +635,6 @@
             localStorage.setItem('kotletClickerStateV2', JSON.stringify(gameState));
         }
 
-        // Funkcja ładująca postęp
         function loadProgress() {
             const savedState = localStorage.getItem('kotletClickerStateV2');
             if (savedState) {
@@ -661,11 +647,19 @@
                 cps = gameState.cps || 0;
                 upgrades = gameState.upgrades || upgrades;
                 workers = gameState.workers || workers;
-                achievements = gameState.achievements || achievements;
                 purchaseCount = gameState.purchaseCount || 0;
                 miniKotletCount = gameState.miniKotletCount || 0;
                 feverCount = gameState.feverCount || 0;
                 workerUpgradeCount = gameState.workerUpgradeCount || 0;
+
+                // Synchronizacja osiągnięć
+                const savedAchievements = gameState.achievements || [];
+                achievements.forEach(achievement => {
+                    const savedAchievement = savedAchievements.find(a => a.id === achievement.id);
+                    if (savedAchievement) {
+                        achievement.unlocked = savedAchievement.unlocked;
+                    }
+                });
 
                 scoreDisplay.textContent = `Wynik: ${Math.round(displayedScore)}`;
                 levelDisplay.textContent = `Poziom: ${level}`;
@@ -674,7 +668,6 @@
             }
         }
 
-        // Funkcja animująca zmianę wyniku
         function animateScore(targetScore) {
             const startScore = displayedScore;
             const duration = 500;
@@ -699,12 +692,10 @@
             requestAnimationFrame(updateScore);
         }
 
-        // Funkcja obliczająca próg punktowy dla kolejnego poziomu
         function getLevelThreshold(currentLevel) {
             return Math.round(1000 * Math.pow(1.8, currentLevel - 1));
         }
 
-        // Funkcja obliczająca mnożnik punktowy
         function getPointsMultiplier() {
             const levelMultiplier = 1 + (level - 1) * 0.2;
             const upgradeMultiplier = upgrades.multiplier.value;
@@ -713,7 +704,6 @@
             return levelMultiplier * upgradeMultiplier * clickMultiplier * feverMultiplier;
         }
 
-        // Funkcja obliczająca punkty za kliknięcie
         function getPointsPerClick() {
             const basePoints = 1;
             const multiplier = getPointsMultiplier();
@@ -723,7 +713,6 @@
             return Math.round(basePoints * multiplier * combo * (isGolden ? 5 : 1) * criticalMultiplier);
         }
 
-        // Funkcja sprawdzająca awans na kolejny poziom
         function checkLevelUp() {
             const threshold = getLevelThreshold(level);
             if (score >= threshold) {
@@ -734,7 +723,6 @@
             }
         }
 
-        // Funkcja uruchamiająca złoty kotlet
         function triggerGoldenKotlet() {
             if (score % 10000 === 0 && score > 0 && !isGolden) {
                 isGolden = true;
@@ -746,7 +734,6 @@
             }
         }
 
-        // Funkcja uruchamiająca minigrę "Łap Złote Kotlety"
         function triggerMiniKotlet() {
             if (score % 20000 === 0 && score > 0) {
                 const miniKotlet = document.createElement('img');
@@ -773,7 +760,6 @@
             }
         }
 
-        // Funkcja uruchamiająca tryb "Gorączka Kotletów"
         function triggerFeverMode() {
             if (combo >= 2 && !isFever && !feverCooldown) {
                 isFever = true;
@@ -793,7 +779,6 @@
             }
         }
 
-        // Funkcja obliczająca CPS
         function updateCPS() {
             const now = Date.now();
             clickTimes = clickTimes.filter(time => now - time < 1000);
@@ -805,7 +790,6 @@
             cpsDisplay.textContent = `CPS: ${cps}`;
         }
 
-        // Funkcja tworząca cząsteczki przy kliknięciu
         function createClickParticle(x, y, points) {
             const particle = document.createElement('div');
             particle.className = 'click-particle';
@@ -816,7 +800,6 @@
             setTimeout(() => particle.remove(), 500);
         }
 
-        // Funkcja tworząca falę przy kliknięciu
         function createClickWave(x, y) {
             const wave = document.createElement('div');
             wave.className = 'click-wave';
@@ -826,7 +809,6 @@
             setTimeout(() => wave.remove(), 600);
         }
 
-        // Funkcja tworząca pierścień combo
         function createComboRing() {
             const ring = document.createElement('div');
             ring.className = 'combo-ring';
@@ -834,7 +816,6 @@
             setTimeout(() => ring.remove(), 1000);
         }
 
-        // Funkcja tworząca cząsteczki przy awansie na poziom
         function createLevelParticles() {
             const kotletRect = kotlet.getBoundingClientRect();
             const containerRect = kotletContainer.getBoundingClientRect();
@@ -858,7 +839,6 @@
             }
         }
 
-        // Funkcja tworząca deszcz punktów przy osiągnięciu
         function createAchievementRain() {
             for (let i = 0; i < 20; i++) {
                 const particle = document.createElement('div');
@@ -871,7 +851,6 @@
             }
         }
 
-        // Funkcja zarządzająca combo
         function updateCombo(currentTime) {
             const timeDiff = currentTime - lastClickTime;
             if (timeDiff < 500) {
@@ -889,7 +868,6 @@
             checkAchievements();
         }
 
-        // Funkcja aktualizująca ulepszenia w popupie
         function updateUpgrades() {
             document.getElementById('upgrade-multiplier').querySelector('p').textContent = `Mnożnik (Poziom ${upgrades.multiplier.level}, Koszt: ${upgrades.multiplier.cost})`;
             document.getElementById('upgrade-golden').querySelector('p').textContent = `Dłuższy Złoty Kotlet (Poziom ${upgrades.golden.level}, Koszt: ${upgrades.golden.cost})`;
@@ -900,7 +878,6 @@
             document.querySelector('#upgrade-critical .upgrade-btn').disabled = score < upgrades.critical.cost;
         }
 
-        // Funkcja zakupu ulepszenia
         function buyUpgrade(type) {
             const upgrade = upgrades[type];
             if (score >= upgrade.cost) {
@@ -927,12 +904,10 @@
                 const flash = document.createElement('div');
                 flash.className = 'purchase-flash';
                 upgradeDiv.appendChild(flash);
-                purchaseSound.play();
                 saveProgress();
             }
         }
 
-        // Funkcja aktualizująca popup pracowników
         function updateWorkersPopup() {
             workersList.innerHTML = '';
             workers.forEach((worker, index) => {
@@ -960,7 +935,6 @@
             });
         }
 
-        // Funkcja aktualizująca popup osiągnięć
         function updateAchievementsPopup() {
             achievementsList.innerHTML = '';
             achievements.forEach(achievement => {
@@ -973,7 +947,6 @@
             });
         }
 
-        // Funkcja zakupu pracownika
         function buyWorker(index) {
             const worker = workers[index];
             if (score >= worker.cost) {
@@ -990,12 +963,10 @@
                 const flash = document.createElement('div');
                 flash.className = 'purchase-flash';
                 workerDiv.appendChild(flash);
-                purchaseSound.play();
                 saveProgress();
             }
         }
 
-        // Funkcja ulepszania pracownika
         function upgradeWorker(index) {
             const worker = workers[index];
             const upgradeCost = Math.round(worker.cost * 0.5);
@@ -1013,12 +984,10 @@
                 const flash = document.createElement('div');
                 flash.className = 'purchase-flash';
                 workerDiv.appendChild(flash);
-                purchaseSound.play();
                 saveProgress();
             }
         }
 
-        // Funkcja automatycznego dodawania punktów przez pracowników
         function autoClick() {
             workers.forEach(worker => {
                 if (worker.owned > 0) {
@@ -1035,7 +1004,6 @@
             saveProgress();
         }
 
-        // Funkcja sprawdzająca osiągnięcia
         function checkAchievements() {
             achievements.forEach(achievement => {
                 if (!achievement.unlocked) {
@@ -1069,18 +1037,15 @@
             updateAchievementsPopup();
         }
 
-        // Funkcja wyświetlająca osiągnięcie
         function displayAchievement(achievement) {
             const notification = document.createElement('div');
             notification.className = 'achievement-notification';
             notification.textContent = `Osiągnięcie: ${achievement.name}!`;
             document.body.appendChild(notification);
             createAchievementRain();
-            achievementSound.play();
             setTimeout(() => notification.remove(), 4000);
         }
 
-        // Obsługa kliknięć w kotleta
         kotlet.addEventListener('click', (event) => {
             const currentTime = Date.now();
             clicks++;
@@ -1108,25 +1073,20 @@
             updateUpgrades();
             updateWorkersPopup();
             checkAchievements();
-            clickSound.play();
             saveProgress();
         });
 
-        // Obsługa popupu sklepu
         shopBtn.addEventListener('click', () => {
             shopPopup.style.display = 'block';
             updateUpgrades();
             updateWorkersPopup();
             updateAchievementsPopup();
-            popupSound.play();
         });
 
         closeShopBtn.addEventListener('click', () => {
             shopPopup.style.display = 'none';
-            popupSound.play();
         });
 
-        // Obsługa zakładek w popupie
         tabButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tab = btn.getAttribute('data-tab');
@@ -1137,7 +1097,6 @@
             });
         });
 
-        // Obsługa ulepszeń w popupie
         document.getElementById('upgrades-tab').addEventListener('click', (event) => {
             if (event.target.classList.contains('upgrade-btn')) {
                 const type = event.target.getAttribute('data-type');
@@ -1145,7 +1104,6 @@
             }
         });
 
-        // Obsługa pracowników w popupie
         workersList.addEventListener('click', (event) => {
             if (event.target.classList.contains('worker-btn')) {
                 const index = event.target.getAttribute('data-index');
@@ -1158,13 +1116,12 @@
             }
         });
 
-        // Automatyczne dodawanie punktów przez pracowników co sekundę i zapisywanie postępu
-        setInterval(() => {
-            autoClick();
-            saveProgress(); // Dodatkowe zapisywanie co sekundę
-        }, 1000);
+        setInterval(autoClick, 1000);
 
-        // Inicjalizacja
+        window.addEventListener('beforeunload', () => {
+            saveProgress();
+        });
+
         loadProgress();
         updateUpgrades();
         updateWorkersPopup();
