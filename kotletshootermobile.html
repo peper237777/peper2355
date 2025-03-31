@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kotlet: Ostatni Bastion</title>
     <style>
-        /* Styl pozostaje bez zmian */
         body {
             margin: 0;
             padding: 0;
@@ -25,8 +24,6 @@
             max-height: 800px;
             position: relative;
             background: linear-gradient(180deg, #1c2526, #0a0a0a);
-            border-radius: 0;
-            box-shadow: none;
             overflow: hidden;
         }
 
@@ -34,11 +31,10 @@
             width: 100%;
             height: 100%;
             position: absolute;
-            display: none;
             touch-action: none;
         }
 
-        #menu, #gameOverScreen {
+        #menu, #gameOver {
             position: absolute;
             top: 0;
             left: 0;
@@ -50,16 +46,16 @@
             align-items: center;
             background: rgba(0, 0, 0, 0.9);
             color: #fff;
-            z-index: 20;
+            z-index: 10;
             padding: 20px;
             box-sizing: border-box;
         }
 
-        #gameOverScreen {
+        #gameOver {
             display: none;
         }
 
-        .menu-button, .difficulty-button, .retry-button {
+        .button {
             padding: 12px 24px;
             margin: 8px;
             background: linear-gradient(45deg, #ff3b30, #ff9500);
@@ -67,175 +63,244 @@
             border: none;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s ease;
             width: 80%;
             max-width: 300px;
             text-align: center;
             touch-action: manipulation;
         }
 
-        .menu-button:active, .difficulty-button:active, .retry-button:active {
+        .button:active {
             transform: scale(0.95);
             box-shadow: 0 0 15px rgba(255, 147, 0, 0.5);
         }
 
-        #ui {
+        #scoreDisplay {
             position: absolute;
-            top: 5px;
-            left: 5px;
+            top: 10px;
+            left: 10px;
             color: #fff;
-            font-size: 14px;
+            font-size: 16px;
             padding: 5px 10px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
-            display: none;
         }
 
-        #shop {
+        #waveDisplay {
             position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: цију
-
-            /* Pozostała część stylów bez zmian */
-        </style>
-    </head>
-    <body>
-        <div id="gameContainer">
-            <canvas id="canvas"></canvas>
-            <div id="redLine"></div>
-            <div id="ui">Punkty: <span id="score">0</span> | Tarcza: <span id="shield">0</span></div>
-            <div id="waveDisplay">Fala: <span id="wave">1</span></div>
-            <div id="shop">
-                <button class="shop-button" onclick="upgradePower()">Moc +1 (50)</button>
-                <button class="shop-button" onclick="upgradeSpeed()">Szybkość +1 (75)</button>
-                <button class="shop-button" onclick="upgradeShield()">Tarcza +1 (100)</button>
-                <button class="shop-button" onclick="upgradeLasers()">Lasery +1 (150)</button>
-            </div>
-            <div id="notification"></div>
-            <div id="menu">
-                <h1 style="font-size: 24px;">Kotlet: Ostatni Bastion</h1>
-                <p style="font-size: 16px;">Rekord: <span id="highScore">0</span></p>
-                <button class="difficulty-button" id="easyButton">Łatwy</button>
-                <button class="difficulty-button" id="mediumButton">Średni</button>
-                <button class="difficulty-button" id="hardButton">Trudny</button>
-            </div>
-            <div id="gameOverScreen">
-                <h1 style="font-size: 24px;">Koniec Gry!</h1>
-                <p style="font-size: 16px;">Punkty: <span id="finalScore">0</span></p>
-                <p style="font-size: 16px;">Fala: <span id="finalWave">1</span></p>
-                <button class="retry-button" onclick="resetGame()">Spróbuj Ponownie</button>
-            </div>
+            top: 10px;
+            right: 10px;
+            color: #fff;
+            font-size: 16px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas"></canvas>
+        <div id="scoreDisplay">Punkty: <span id="score">0</span></div>
+        <div id="waveDisplay">Fala: <span id="wave">1</span></div>
+        <div id="menu">
+            <h1 style="font-size: 24px;">Kotlet: Ostatni Bastion</h1>
+            <p style="font-size: 16px;">Rekord: <span id="highScore">0</span></p>
+            <button class="button" id="startButton">Rozpocznij Grę</button>
         </div>
+        <div id="gameOver">
+            <h1 style="font-size: 24px;">Koniec Gry!</h1>
+            <p style="font-size: 16px;">Punkty: <span id="finalScore">0</span></p>
+            <p style="font-size: 16px;">Fala: <span id="finalWave">1</span></p>
+            <button class="button" id="retryButton">Spróbuj Ponownie</button>
+        </div>
+    </div>
 
-        <script>
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const notification = document.getElementById('notification');
-            const scoreDisplay = document.getElementById('score');
-            const shieldDisplay = document.getElementById('shield');
-            const waveDisplay = document.getElementById('wave');
-            const menu = document.getElementById('menu');
-           Pillars = document.getElementById('gameOverScreen');
-            const finalScore = document.getElementById('finalScore');
-            const finalWave = document.getElementById('finalWave');
-            const ui = document.getElementById('ui');
-            const shop = document.getElementById('shop');
-            const redLine = document.getElementById('redLine');
-            const highScoreDisplay = document.getElementById('highScore');
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const waveDisplay = document.getElementById('wave');
+        const menu = document.getElementById('menu');
+        const gameOver = document.getElementById('gameOver');
+        const finalScore = document.getElementById('finalScore');
+        const finalWave = document.getElementById('finalWave');
+        const highScoreDisplay = document.getElementById('highScore');
 
-            function resizeCanvas() {
-                const container = document.getElementById('gameContainer');
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight;
-                kotlet.y = canvas.height - 50;
+        // Responsywne wymiary canvas
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let gameState = 'menu'; // 'menu', 'playing', 'gameover'
+        let score = 0;
+        let wave = 1;
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+        highScoreDisplay.textContent = highScore;
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            speed: 5,
+            size: 40
+        };
+
+        let enemies = [];
+        let bullets = [];
+        let touchX = null;
+        let shootingInterval = null;
+
+        function spawnEnemy() {
+            enemies.push({
+                x: Math.random() * (canvas.width - 30),
+                y: -30,
+                speed: 1 + wave * 0.2,
+                size: 30
+            });
+        }
+
+        function shootBullet() {
+            bullets.push({
+                x: player.x,
+                y: player.y - 20,
+                speed: 10
+            });
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            wave = 1;
+            player.x = canvas.width / 2;
+            enemies = [];
+            bullets = [];
+            scoreDisplay.textContent = score;
+            waveDisplay.textContent = wave;
+            menu.style.display = 'none';
+            gameOver.style.display = 'none';
+            update();
+        }
+
+        function endGame() {
+            gameState = 'gameover';
+            finalScore.textContent = score;
+            finalWave.textContent = wave;
+            gameOver.style.display = 'flex';
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreDisplay.textContent = highScore;
             }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+            clearInterval(shootingInterval);
+        }
 
-            let score = 0;
-            let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
-            highScoreDisplay.textContent = highScore;
-            let kotlet = {
-                x: canvas.width / 2,
-                y: canvas.height - 50,
-                speed: 5,
-                laserPower: 1,
-                shield: 0,
-                extraLasers: 0
-            };
-            let chickens = [];
-            let lasers = [];
-            let particles = [];
-            let achievements = new Set();
-            let gameOver = true;
-            let difficulty = 0.015;
-            let difficultyMultiplier = 1;
-            let wave = 1;
-            let enemiesToSpawn = 5;
-            let enemiesSpawned = 0;
-            let animationFrameId = null;
-            let bossSpawnTimer = 0;
+        function update() {
+            if (gameState !== 'playing') return;
 
-            // [Pozostałe stałe jak BOSSES, ACHIEVEMENTS i audio bez zmian]
-
-            function startGame(diff, diffMultiplier) {
-                console.log('Starting game with difficulty:', diff, 'multiplier:', diffMultiplier); // Debug
-                if (!gameOver) return;
-                difficulty = diff;
-                difficultyMultiplier = diffMultiplier;
-                menu.style.display = 'none';
-                canvas.style.display = 'block';
-                ui.style.display = 'block';
-                shop.style.display = 'flex';
-                redLine.style.display = 'block';
-                waveDisplay.parentElement.style.display = 'block';
-                gameOver = false;
-                score = 0;
-                wave = 1;
-                enemiesToSpawn = 5;
-                enemiesSpawned = 0;
-                kotlet = { x: canvas.width / 2, y: canvas.height - 50, speed: 5, laserPower: 1, shield: 0, extraLasers: 0 };
-                chickens = [];
-                lasers = [];
-                particles = [];
-                achievements.clear();
-                scoreDisplay.textContent = score;
-                shieldDisplay.textContent = kotlet.shield;
-                waveDisplay.textContent = wave;
-                bossSpawnTimer = 0;
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                backgroundMusic.play();
-                update();
+            // Ruch gracza
+            if (touchX !== null) {
+                if (touchX < player.x - 10 && player.x > player.size / 2) player.x -= player.speed;
+                if (touchX > player.x + 10 && player.x < canvas.width - player.size / 2) player.x += player.speed;
             }
 
-            // [Pozostała część funkcji jak resetGame, spawnChicken itp. bez zmian]
+            // Spawn przeciwników
+            if (Math.random() < 0.02 + wave * 0.005) spawnEnemy();
 
-            // Dodanie obsługi zdarzeń dotykowych dla przycisków menu
-            document.getElementById('easyButton').addEventListener('touchend', () => {
-                console.log('Easy mode selected'); // Debug
-                startGame(0.01, 1);
-            });
-            document.getElementById('mediumButton').addEventListener('touchend', () => {
-                console.log('Medium mode selected'); // Debug
-                startGame(0.015, 1.5);
-            });
-            document.getElementById('hardButton').addEventListener('touchend', () => {
-                console.log('Hard mode selected'); // Debug
-                startGame(0.02, 2);
+            // Aktualizacja pocisków
+            bullets.forEach((bullet, i) => {
+                bullet.y -= bullet.speed;
+                if (bullet.y < 0) bullets.splice(i, 1);
             });
 
-            // [Pozostała część kodu JavaScript bez zmian]
+            // Aktualizacja przeciwników
+            enemies.forEach((enemy, i) => {
+                enemy.y += enemy.speed;
+                if (enemy.y > canvas.height * 0.9) {
+                    endGame();
+                    return;
+                }
 
-            // Upewnienie się, że canvas jest gotowy
-            window.addEventListener('load', () => {
-                resizeCanvas();
-                console.log('Canvas initialized'); // Debug
+                bullets.forEach((bullet, j) => {
+                    if (Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < (enemy.size + 5) / 2) {
+                        enemies.splice(i, 1);
+                        bullets.splice(j, 1);
+                        score += 10;
+                        if (enemies.length === 0) {
+                            wave++;
+                            waveDisplay.textContent = wave;
+                        }
+                        return;
+                    }
+                });
             });
-        </script>
-    </body>
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Rysuj gracza
+            ctx.font = `${player.size}px Arial`;
+            ctx.fillText('🥩', player.x - player.size / 2, player.y);
+
+            // Rysuj przeciwników
+            enemies.forEach(enemy => {
+                ctx.font = `${enemy.size}px Arial`;
+                ctx.fillText('🐔', enemy.x - enemy.size / 2, enemy.y);
+            });
+
+            // Rysuj pociski
+            ctx.fillStyle = '#ff9500';
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            scoreDisplay.textContent = score;
+        }
+
+        // Sterowanie dotykowe
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                touchX = e.touches[0].clientX - rect.left;
+                shootingInterval = setInterval(shootBullet, 200);
+            }
+        });
+
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                touchX = e.touches[0].clientX - rect.left;
+            }
+        });
+
+        canvas.addEventListener('touchend', e => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                touchX = null;
+                clearInterval(shootingInterval);
+            }
+        });
+
+        // Obsługa przycisków
+        document.getElementById('startButton').addEventListener('touchend', e => {
+            e.preventDefault();
+            startGame();
+        });
+
+        document.getElementById('retryButton').addEventListener('touchend', e => {
+            e.preventDefault();
+            startGame();
+        });
+    </script>
+</body>
 </html>
