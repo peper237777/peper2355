@@ -149,6 +149,24 @@
             background: #c0c0c0;
         }
 
+        /* Footer */
+        footer {
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .back-to-desktop {
+            font-size: 13px;
+            color: #007aff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .back-to-desktop:hover {
+            opacity: 1;
+        }
+
         /* iPhone Adjustments */
         @media (max-width: 430px) {
             .section-title {
@@ -179,6 +197,10 @@
                 font-size: 13px;
                 right: 10px;
             }
+
+            .back-to-desktop {
+                font-size: 12px;
+            }
         }
 
         /* Animations */
@@ -195,6 +217,10 @@
         @supports (padding-top: env(safe-area-inset-top)) {
             body {
                 padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            footer {
+                padding-bottom: calc(20px + env(safe-area-inset-bottom));
             }
         }
     </style>
@@ -266,5 +292,11 @@
             </div>
         </div>
     </main>
+
+    <footer>
+        <div class="container">
+            <a href="#" class="back-to-desktop">Wróć do trybu komputerowego</a>
+        </div>
+    </footer>
 </body>
 </html>
