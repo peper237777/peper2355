@@ -2,31 +2,31 @@
 <html>
 <head>
     <title>Kotlet-Man</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             margin: 0;
+            padding: 0;
             background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            width: 100vw;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
             touch-action: none;
         }
         .container {
             width: 100%;
-            max-width: 620px;
-            padding: 20px;
+            height: 100%;
             position: relative;
             box-sizing: border-box;
         }
         canvas {
-            margin: 0 auto;
-            background: #000;
             width: 100%;
-            max-width: 560px;
-            height: auto;
+            height: 100%;
+            background: #000;
         }
         .ui {
             position: absolute;
@@ -87,7 +87,7 @@
         const joystick = document.getElementById('joystick');
         const knob = document.getElementById('joystick-knob');
 
-        const tileSize = 40; // Powiększenie mapy (było 20)
+        const tileSize = 40;
         let score = 0;
         let lives = 3;
         let gameActive = true;
@@ -133,8 +133,8 @@
         let kotlet = {
             x: 13 * tileSize,
             y: 23 * tileSize,
-            size: 40, // Powiększenie kotleta (było 20)
-            speed: 4, // Zwiększona prędkość (było 2)
+            size: 40,
+            speed: 4,
             dx: 0,
             dy: 0,
             dotsEaten: 0,
@@ -155,15 +155,15 @@
             for(let y = 0; y < map.length; y++) {
                 for(let x = 0; x < map[y].length; x++) {
                     if(map[y][x] === 0) {
-                        dots.push({ x: x * tileSize + tileSize/2, y: y * tileSize + tileSize/2, radius: 6 }); // Powiększone kropki
+                        dots.push({ x: x * tileSize + tileSize/2, y: y * tileSize + tileSize/2, radius: 6 });
                     }
                 }
             }
         }
 
-        // Rozpoczęcie gry
-        canvas.width = 560; // Rozmiar okna gry
-        canvas.height = 620;
+        // Ustawienie pełnego ekranu
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         resetGame();
         gameLoop();
 
@@ -194,11 +194,11 @@
 
         // Joystick
         let joystickActive = false;
-        let joystickBaseX = 50; // Początkowa pozycja X joysticka
-        let joystickBaseY = canvas.height - 50; // Początkowa pozycja Y joysticka
+        let joystickBaseX = 50;
+        let joystickBaseY = canvas.height - 50;
         let touchId = null;
 
-        joystick.style.left = `${joystickBaseX - 50}px`; // Początkowa pozycja joysticka
+        joystick.style.left = `${joystickBaseX - 50}px`;
         joystick.style.top = `${joystickBaseY - 50}px`;
         knob.style.left = '50%';
         knob.style.top = '50%';
@@ -234,7 +234,7 @@
             for (let touch of e.changedTouches) {
                 if (touch.identifier === touchId) {
                     joystickActive = false;
-                    joystick.style.left = `${50 - 50}px`; // Wróć do początkowej pozycji
+                    joystick.style.left = `${50 - 50}px`;
                     joystick.style.top = `${canvas.height - 50 - 50}px`;
                     knob.style.left = '50%';
                     knob.style.top = '50%';
@@ -251,7 +251,7 @@
             let dx = touch.clientX - rect.left - joystickBaseX;
             let dy = touch.clientY - rect.top - joystickBaseY;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDistance = 50; // Promień joysticka
+            const maxDistance = 50;
 
             if (distance > maxDistance) {
                 dx = dx * maxDistance / distance;
@@ -299,7 +299,7 @@
         function drawGhosts(cameraX, cameraY) {
             ghosts.forEach(ghost => {
                 ctx.beginPath();
-                ctx.arc(ghost.x - cameraX, ghost.y - cameraY, 20, 0, Math.PI * 2); // Powiększone duchy
+                ctx.arc(ghost.x - cameraX, ghost.y - cameraY, 20, 0, Math.PI * 2);
                 ctx.fillStyle = ghost.color;
                 ctx.fill();
                 ctx.closePath();
@@ -318,12 +318,13 @@
         function updateKotlet() {
             const newX = kotlet.x + kotlet.dx;
             const newY = kotlet.y + kotlet.dy;
-            if(!checkCollision(newX, newY)) {
+
+            // Sprawdzanie kolizji osobno dla X i Y, aby kotlet ślizgał się wzdłuż ścian
+            if (!checkCollision(newX, kotlet.y)) {
                 kotlet.x = newX;
+            }
+            if (!checkCollision(kotlet.x, newY)) {
                 kotlet.y = newY;
-            } else {
-                kotlet.dx = 0;
-                kotlet.dy = 0;
             }
 
             dots = dots.filter(dot => {
@@ -403,7 +404,6 @@
         function gameLoop() {
             if(!gameActive) return;
 
-            // Kamera śledząca gracza
             const cameraX = kotlet.x - canvas.width / 2;
             const cameraY = kotlet.y - canvas.height / 2;
 
@@ -416,6 +416,16 @@
             updateGhosts();
             requestAnimationFrame(gameLoop);
         }
+
+        // Obsługa zmiany rozmiaru okna
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            joystickBaseY = canvas.height - 50;
+            if (!joystickActive) {
+                joystick.style.top = `${joystickBaseY - 50}px`;
+            }
+        });
     </script>
 </body>
 </html>
