@@ -589,7 +589,6 @@
             { id: 4, name: "Poziom 5", threshold: 5, type: "level", unlocked: false },
             { id: 5, name: "Combo x2.0", threshold: 2.0, type: "combo", unlocked: false },
             { id: 6, name: "Kup 5 ulepszeń", threshold: 5, type: "purchase", unlocked: false },
-            { id: 7, name: "Złap 3 Złote Kotlety", threshold: 3, type: "miniKotlet", unlocked: false },
             { id: 8, name: "Zatrudnij 3 pracowników", threshold: 3, type: "worker", unlocked: false },
             { id: 9, name: "100 kliknięć", threshold: 100, type: "clicks", unlocked: false },
             { id: 10, name: "50 000 punktów", threshold: 50000, unlocked: false },
@@ -599,7 +598,6 @@
             { id: 14, name: "Poziom 10", threshold: 10, type: "level", unlocked: false },
             { id: 15, name: "Combo x2.5", threshold: 2.5, type: "combo", unlocked: false },
             { id: 16, name: "Kup 10 ulepszeń", threshold: 10, type: "purchase", unlocked: false },
-            { id: 17, name: "Złap 10 Złotych Kotletów", threshold: 10, type: "miniKotlet", unlocked: false },
             { id: 18, name: "Zatrudnij 10 pracowników", threshold: 10, type: "worker", unlocked: false },
             { id: 19, name: "500 kliknięć", threshold: 500, type: "clicks", unlocked: false },
             { id: 20, name: "1 000 000 punktów", threshold: 1000000, unlocked: false },
@@ -609,7 +607,6 @@
             { id: 24, name: "Poziom 20", threshold: 20, type: "level", unlocked: false },
             { id: 25, name: "Combo x3.0", threshold: 3.0, type: "combo", unlocked: false },
             { id: 26, name: "Kup 20 ulepszeń", threshold: 20, type: "purchase", unlocked: false },
-            { id: 27, name: "Złap 20 Złotych Kotletów", threshold: 20, type: "miniKotlet", unlocked: false },
             { id: 28, name: "Zatrudnij 20 pracowników", threshold: 20, type: "worker", unlocked: false },
             { id: 29, name: "1000 kliknięć", threshold: 1000, type: "clicks", unlocked: false },
             { id: 30, name: "100 000 000 punktów", threshold: 100000000, unlocked: false },
@@ -1054,9 +1051,6 @@
                     } else if (achievement.type === 'fever' && feverCount >= achievement.threshold) {
                         achievement.unlocked = true;
                         displayAchievement(achievement);
-                    } else if (achievement.type === 'miniKotlet' && miniKotletCount >= achievement.threshold) {
-                        achievement.unlocked = true;
-                        displayAchievement(achievement);
                     } else if (achievement.type === 'clicks' && clicks >= achievement.threshold) {
                         achievement.unlocked = true;
                         displayAchievement(achievement);
@@ -1124,7 +1118,7 @@
             updateUpgrades();
             updateWorkersPopup();
             updateAchievementsPopup();
-            popupSound.play(), 'click';
+            popupSound.play();
         });
 
         closeShopBtn.addEventListener('click', () => {
@@ -1164,8 +1158,11 @@
             }
         });
 
-        // Automatyczne dodawanie punktów przez pracowników co sekundę
-        setInterval(autoClick, 1000);
+        // Automatyczne dodawanie punktów przez pracowników co sekundę i zapisywanie postępu
+        setInterval(() => {
+            autoClick();
+            saveProgress(); // Dodatkowe zapisywanie co sekundę
+        }, 1000);
 
         // Inicjalizacja
         loadProgress();
