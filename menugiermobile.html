@@ -2,105 +2,135 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>KOTLET.FUN</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            background: #f5f5f7;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e0e7ff 50%, #d1e4ff 100%);
             color: #1d1d1f;
-            line-height: 1.5;
+            line-height: 1.6;
             overflow-x: hidden;
+            min-height: 100vh;
             overscroll-behavior: none;
         }
 
         .container {
-            max-width: 1280px;
+            max-width: 390px; /* iPhone 14 Pro width */
             margin: 0 auto;
             padding: 0 16px;
         }
 
         header {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px) saturate(180%);
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(30, 30, 30, 0.85));
+            backdrop-filter: blur(20px) saturate(200%);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
-            transition: background 0.3s ease;
+            padding-top: env(safe-area-inset-top);
         }
 
         .header-content {
-            padding: 12px 0;
+            padding: 14px 0;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
         }
 
         .logo {
             color: #ffffff;
             font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
             text-decoration: none;
-            transition: color 0.3s ease;
+            background: linear-gradient(45deg, #ffffff, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: transform 0.3s ease;
         }
 
         .logo:hover {
-            color: #ffd700;
+            transform: scale(1.05);
         }
 
         .games-grid {
             padding: 80px 0 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .game-card {
-            background: #ffffff;
-            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 28px;
             overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
             text-decoration: none;
             color: #1d1d1f;
             transform: translateZ(0);
+            position: relative;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(200, 220, 255, 0.1));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 0;
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
         }
 
         .game-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
         }
 
         .game-image {
             width: 100%;
-            height: 220px;
+            height: 200px;
             object-fit: cover;
-            transition: transform 0.4s ease;
+            transition: transform 0.6s ease;
         }
 
         .game-card:hover .game-image {
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
 
         .game-info {
             padding: 20px;
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
 
         .game-title {
             font-size: 22px;
             font-weight: 700;
-            margin-bottom: 6px;
-            letter-spacing: -0.2px;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(45deg, #1d1d1f, #434343);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .game-desc {
@@ -109,31 +139,19 @@
             font-weight: 400;
         }
 
-        /* Mobile Optimization */
-        @media (max-width: 768px) {
+        /* iPhone-Specific Adjustments */
+        @media (max-width: 430px) {
             .container {
                 padding: 0 12px;
             }
 
-            .header-content {
-                padding: 10px 0;
-            }
-
-            .logo {
-                font-size: 16px;
-                text-align: center;
-                padding: 0 10px;
-            }
-
             .games-grid {
-                grid-template-columns: 1fr;
-                padding: 60px 0 20px;
+                padding: 70px 0 30px;
                 gap: 16px;
             }
 
             .game-card {
-                border-radius: 20px;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+                border-radius: 24px;
             }
 
             .game-image {
@@ -149,23 +167,34 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .game-image {
-                height: 160px;
+        /* Animation for Page Load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-
-            .game-info {
-                padding: 16px;
-            }
-
-            .game-title {
-                font-size: 18px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Smooth Scroll Behavior */
-        html {
-            scroll-behavior: smooth;
+        .game-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+        .game-card:nth-child(4) { animation-delay: 0.4s; }
+        .game-card:nth-child(5) { animation-delay: 0.5s; }
+        .game-card:nth-child(6) { animation-delay: 0.6s; }
+
+        /* Safe Area for Notches */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
         }
     </style>
 </head>
@@ -213,7 +242,7 @@
             <a href="/kotletclickerpro.html" class="game-card">
                 <img src="https://i.imgur.com/LeZRfUJ.jpeg" class="game-image" alt="Kotlet Wegański">
                 <div class="game-info">
-                    <h2 class="game-title">Kotlet Clicker SIMPLE EDITION</h2>
+                    <h2 class="game-title">Kotlet Clicker</h2>
                     <p class="game-desc">Najprostszy i jedyny w swoim rodzaju clicker!</p>
                 </div>
             </a>
@@ -221,7 +250,7 @@
             <a href="/breakout.html" class="game-card">
                 <img src="https://i.imgur.com/BtSX1sE.jpeg" class="game-image" alt="Kotlet Jaglany">
                 <div class="game-info">
-                    <h2 class="game-title">Kotlet Breakout (POWSTAJE)</h2>
+                    <h2 class="game-title">Kotlet Breakout</h2>
                     <p class="game-desc">Rozbijaj cegły rzucając kotletem!</p>
                 </div>
             </a>
