@@ -67,20 +67,25 @@
             transition: width 0.5s ease-in-out;
         }
         .privacy-notice {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             background-color: #0071e3;
             color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            text-align: center;
             display: none;
+            max-width: 90%;
         }
     </style>
 </head>
 <body>
 
     <div class="privacy-notice" id="privacy-notice">
-        <strong>Bezpieczeństwo Twoich danych:</strong> Wszystkie informacje zbierane na tej stronie są przechowywane wyłącznie w Twojej przeglądarce. Nie są one zapisywane ani wysyłane do żadnego serwera. Twoje dane są całkowicie bezpieczne i poufne.
+        <strong>Bezpieczeństwo Twoich danych:</strong> Dane są przetwarzane lokalnie w Twojej przeglądarce. **Nie są zapisywane ani wysyłane do serwera.**
     </div>
 
     <div class="container">
@@ -107,7 +112,7 @@
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
 
-            // Pokazanie komunikatu o bezpieczeństwie danych
+            // Pokaż komunikat o bezpieczeństwie
             document.getElementById("privacy-notice").style.display = "block";
             await delay(3000); // Czekaj przez 3 sekundy
 
@@ -178,19 +183,23 @@
             updateProgress(10);
             await delay(500);
 
-            const accelerometer = "Nieznane";
-            const gyroscope = "Nieznane";
-            try {
-                // Wykorzystanie API czujników
-                if (window.DeviceMotionEvent) {
-                    window.addEventListener("devicemotion", function(event) {
-                        accelerometer = `Akcelerometr: X=${event.acceleration.x}, Y=${event.acceleration.y}, Z=${event.acceleration.z}`;
-                        gyroscope = `Żyroskop: X=${event.rotationRate.alpha}, Y=${event.rotationRate.beta}, Z=${event.rotationRate.gamma}`;
-                    });
-                }
-            } catch (error) {
-                console.error("Błąd w dostępach do czujników");
-            }
+            // Dodatkowe zabawne dane:
+            const lastVisit = localStorage.getItem("lastVisit");
+            const visitTime = lastVisit ? new Date(lastVisit) : "Pierwsza wizyta!";
+            localStorage.setItem("lastVisit", new Date().toString());
+            updateProgress(10);
+            await delay(500);
+
+            const openTabs = window.length || "Nieznane";
+            updateProgress(10);
+            await delay(500);
+
+            // Liczba kliknięć na stronie
+            let clickCount = 0;
+            document.body.addEventListener("click", () => {
+                clickCount++;
+                console.log(`Kliknięcia: ${clickCount}`);
+            });
             updateProgress(10);
             await delay(500);
 
@@ -202,26 +211,25 @@
 
             document.getElementById("device-info").innerHTML = `
                 <h3>Informacje o urządzeniu:</h3>
-                <p><strong>Adres IP:</strong> ${ipAddress}</p>
-                <p><strong>ISP:</strong> ${isp}</p>
-                <p><strong>Miasto/Kraj:</strong> ${city}, ${country}</p>
-                <p><strong>Wersja systemu:</strong> ${platform}</p>
+                <p><strong>Użytkownik Agent:</strong> ${userAgent}</p>
+                <p><strong>Platforma:</strong> ${platform}</p>
                 <p><strong>Język:</strong> ${language}</p>
                 <p><strong>Rozdzielczość ekranu:</strong> ${screenWidth} x ${screenHeight}</p>
-                <p><strong>DPI ekranu:</strong> ${screenDPI}</p>
                 <p><strong>Strefa czasowa:</strong> ${timezone}</p>
+                <p><strong>Adres IP:</strong> ${ipAddress}</p>
+                <p><strong>Miasto:</strong> ${city}</p>
+                <p><strong>Kraj:</strong> ${country}</p>
                 <p><strong>Poziom baterii:</strong> ${batteryStatus}</p>
-                <p><strong>Liczba rdzeni CPU:</strong> ${hardwareConcurrency}</p>
-                <p><strong>Pamięć RAM:</strong> ${deviceMemory}</p>
+                <p><strong>Sprzęt:</strong> CPU: ${hardwareConcurrency} rdzeni, RAM: ${deviceMemory}</p>
                 <p><strong>GPU:</strong> ${gpuInfo}</p>
-                <p><strong>Urządzenia peryferyjne:</strong><br>${devicesList}</p>
-                <p><strong>Akcelerometr:</strong> ${accelerometer}</p>
-                <p><strong>Żyroskop:</strong> ${gyroscope}</p>
+                <p><strong>Urządzenia peryferyjne:</strong> ${devicesList}</p>
+                <p><strong>Czas ostatniej wizyty:</strong> ${visitTime}</p>
+                <p><strong>Ilość otwartych kart:</strong> ${openTabs}</p>
+                <p><strong>Łączna liczba kliknięć na stronie:</strong> ${clickCount}</p>
             `;
         }
 
-        getDeviceInfo();
+        window.onload = getDeviceInfo;
     </script>
-
 </body>
 </html>
