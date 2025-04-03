@@ -40,9 +40,6 @@
             word-wrap: break-word;
             margin-bottom: 20px;
         }
-        .info strong {
-            color: #0071e3;
-        }
         .loading {
             font-size: 18px;
             font-weight: bold;
@@ -64,7 +61,6 @@
             height: 20px;
             background-color: #0071e3;
             border-radius: 10px;
-            transition: width 0.5s ease-in-out;
         }
 
         /* Powiadomienie w stylu iOS */
@@ -89,7 +85,7 @@
 <body>
 
     <div class="privacy-notice" id="privacy-notice">
-        <strong>Bezpieczeństwo Twoich danych:</strong> Dane są przetwarzane lokalnie w Twojej przeglądarce. **Nie są zapisywane ani wysyłane do serwera.**
+        Dane są przetwarzane lokalnie w Twojej przeglądarce. Nie są zapisywane ani wysyłane do serwera.
     </div>
 
     <div class="container">
@@ -103,41 +99,47 @@
 
     <script>
         let progress = 0;
+
+        // Funkcja do aktualizowania paska postępu
         function updateProgress(value) {
             progress = Math.min(100, progress + value);
-            document.getElementById("progress-text").innerText = progress + "%";
+            document.getElementById("progress-text").innerText = progress.toFixed(1) + "%";
             document.getElementById("progress-bar").style.width = progress + "%";
         }
 
+        // Funkcja do symulacji opóźnienia
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Pobieranie informacji o urządzeniu
         async function getDeviceInfo() {
             document.querySelector(".progress-container").style.display = "block";
 
-            function delay(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
-
-            // Pokaż komunikat o bezpieczeństwie w stylu powiadomienia iOS
+            // Pokaż powiadomienie o bezpieczeństwie w stylu iOS
             document.getElementById("privacy-notice").style.display = "block";
             await delay(3000); // Czekaj przez 3 sekundy
 
-            updateProgress(10);
-            await delay(500);
+            // Stopniowe zwiększanie postępu
+            updateProgress(1);
+            await delay(100);
 
+            // Pobierz dane urządzenia
             const userAgent = navigator.userAgent;
             const platform = navigator.platform;
             const language = navigator.language;
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.height;
             const screenDPI = window.devicePixelRatio;
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             let ipAddress = "Nieznane", isp = "Nieznane", city = "Nieznane", country = "Nieznane";
             try {
@@ -150,21 +152,21 @@
             } catch (error) {
                 console.error("Błąd pobierania IP");
             }
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             let batteryStatus = "Nieznane";
             if (navigator.getBattery) {
                 const battery = await navigator.getBattery();
                 batteryStatus = `Poziom: ${battery.level * 100}%, Ładowanie: ${battery.charging ? "Tak" : "Nie"}`;
             }
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             const hardwareConcurrency = navigator.hardwareConcurrency || "Nieznane";
             const deviceMemory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Nieznane";
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             const gpuInfo = "Nieznane";
             try {
@@ -174,8 +176,8 @@
             } catch (error) {
                 console.error("Błąd pobierania GPU");
             }
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             let devicesList = "Nieznane";
             try {
@@ -184,35 +186,29 @@
             } catch (error) {
                 console.error("Błąd pobierania urządzeń");
             }
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
-            // Dodatkowe zabawne dane:
+            // Dodatkowe dane
             const lastVisit = localStorage.getItem("lastVisit");
             const visitTime = lastVisit ? new Date(lastVisit) : "Pierwsza wizyta!";
             localStorage.setItem("lastVisit", new Date().toString());
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
             const openTabs = window.length || "Nieznane";
-            updateProgress(10);
-            await delay(500);
+            updateProgress(1);
+            await delay(100);
 
-            // Liczba kliknięć na stronie
-            let clickCount = 0;
-            document.body.addEventListener("click", () => {
-                clickCount++;
-                console.log(`Kliknięcia: ${clickCount}`);
-            });
-            updateProgress(10);
-            await delay(500);
+            // Zakończenie pobierania danych
+            updateProgress(100 - progress);  // Dodaj resztę, by osiągnąć 100%
+            await delay(100);
 
-            updateProgress(100);
-            await delay(500);
-
+            // Po zakończeniu, ukrywamy pasek postępu
             document.getElementById("loading-text").style.display = "none";
             document.querySelector(".progress-container").style.display = "none";
 
+            // Wyświetlanie danych urządzenia
             document.getElementById("device-info").innerHTML = `
                 <h3>Informacje o urządzeniu:</h3>
                 <p><strong>Użytkownik Agent:</strong> ${userAgent}</p>
@@ -229,7 +225,6 @@
                 <p><strong>Urządzenia peryferyjne:</strong> ${devicesList}</p>
                 <p><strong>Czas ostatniej wizyty:</strong> ${visitTime}</p>
                 <p><strong>Ilość otwartych kart:</strong> ${openTabs}</p>
-                <p><strong>Łączna liczba kliknięć na stronie:</strong> ${clickCount}</p>
             `;
         }
 
