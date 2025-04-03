@@ -66,19 +66,23 @@
             border-radius: 10px;
             transition: width 0.5s ease-in-out;
         }
+
+        /* Powiadomienie w stylu iOS */
         .privacy-notice {
             position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
+            right: 0;
             background-color: #0071e3;
             color: white;
             padding: 10px 20px;
-            border-radius: 50px;
             font-size: 14px;
             text-align: center;
+            border-bottom: 2px solid #005bb5;
+            z-index: 9999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             display: none;
-            max-width: 90%;
+            border-radius: 0 0 10px 10px;
         }
     </style>
 </head>
@@ -112,7 +116,7 @@
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
 
-            // Pokaż komunikat o bezpieczeństwie
+            // Pokaż komunikat o bezpieczeństwie w stylu powiadomienia iOS
             document.getElementById("privacy-notice").style.display = "block";
             await delay(3000); // Czekaj przez 3 sekundy
 
