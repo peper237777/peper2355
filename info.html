@@ -55,14 +55,14 @@
             background-color: #ddd;
             border-radius: 10px;
             margin: 20px 0;
-            display: none;
+            display: block;
         }
         .progress-bar {
             width: 0%;
             height: 20px;
             background-color: #0071e3;
             border-radius: 10px;
-            transition: width 0.3s ease-in-out;
+            transition: width 0.5s ease-in-out;
         }
     </style>
 </head>
@@ -88,26 +88,28 @@
         async function getDeviceInfo() {
             document.querySelector(".progress-container").style.display = "block";
 
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            updateProgress(10);
+            await delay(500);
+
             const userAgent = navigator.userAgent;
             const platform = navigator.platform;
-            const language = navigator.language;
             updateProgress(10);
+            await delay(500);
 
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.height;
+            updateProgress(10);
+            await delay(500);
+
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             updateProgress(10);
+            await delay(500);
 
-            const hardwareConcurrency = navigator.hardwareConcurrency || "Nieznane";
-            const memory = navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Nieznane";
-            updateProgress(10);
-
-            const battery = await navigator.getBattery()
-                .then(b => `${Math.round(b.level * 100)}% (${b.charging ? "Ładowanie" : "Nie ładuje"})`)
-                .catch(() => "Nieznane");
-            updateProgress(10);
-
-            let ipAddress = "Nieznane", isp = "Nieznane", city = "Nieznane", country = "Nieznane", latitude = "Nieznane", longitude = "Nieznane";
+            let ipAddress = "Nieznane", isp = "Nieznane", city = "Nieznane", country = "Nieznane";
             try {
                 const ipResponse = await fetch('https://ipapi.co/json/');
                 const ipData = await ipResponse.json();
@@ -115,12 +117,11 @@
                 isp = ipData.org;
                 city = ipData.city;
                 country = ipData.country_name;
-                latitude = ipData.latitude;
-                longitude = ipData.longitude;
             } catch (error) {
-                console.error("Nie udało się pobrać lokalizacji:", error);
+                console.error("Błąd pobierania IP");
             }
             updateProgress(20);
+            await delay(500);
 
             function getDeviceModel() {
                 if (/iPhone/.test(userAgent)) return "Apple iPhone";
@@ -131,6 +132,7 @@
                 return "Nieznane urządzenie";
             }
             updateProgress(10);
+            await delay(500);
 
             let speed = "Nieznane";
             try {
@@ -140,18 +142,24 @@
                 const duration = (endTime - startTime) / 1000;
                 speed = (1 / duration).toFixed(2) + " MB/s";
             } catch (error) {
-                console.error("Nie udało się zmierzyć prędkości internetu.");
+                console.error("Błąd testu prędkości internetu");
             }
-            updateProgress(20);
+            updateProgress(10);
+            await delay(500);
 
             let devicesList = "Nieznane";
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 devicesList = devices.map(d => `${d.kind}: ${d.label}`).join("<br>");
             } catch (error) {
-                console.error("Nie udało się pobrać listy urządzeń.");
+                console.error("Błąd pobierania urządzeń");
             }
             updateProgress(10);
+            await delay(500);
+
+            // Ostateczne dojście do 100%
+            updateProgress(100);
+            await delay(500);
 
             document.getElementById("loading-text").style.display = "none";
             document.querySelector(".progress-container").style.display = "none";
@@ -160,15 +168,12 @@
                 <p><strong>Adres IP:</strong> ${ipAddress}</p>
                 <p><strong>ISP:</strong> ${isp}</p>
                 <p><strong>Miasto/Kraj:</strong> ${city}, ${country}</p>
-                <p><strong>Współrzędne:</strong> ${latitude}, ${longitude}</p>
                 <p><strong>Prędkość internetu:</strong> ${speed}</p>
                 <p><strong>Urządzenie:</strong> ${getDeviceModel()}</p>
                 <p><strong>System:</strong> ${platform}</p>
                 <p><strong>Przeglądarka:</strong> ${userAgent}</p>
                 <p><strong>Rozdzielczość:</strong> ${screenWidth} x ${screenHeight}</p>
-                <p><strong>Bateria:</strong> ${battery}</p>
-                <p><strong>Liczba rdzeni CPU:</strong> ${hardwareConcurrency}</p>
-                <p><strong>Pamięć RAM:</strong> ${memory}</p>
+                <p><strong>Strefa czasowa:</strong> ${timezone}</p>
                 <p><strong>Urządzenia podłączone:</strong><br>${devicesList}</p>
             `;
         }
