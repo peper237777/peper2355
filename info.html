@@ -63,7 +63,6 @@
             border-radius: 10px;
         }
 
-        /* Powiadomienie w stylu iOS */
         .privacy-notice {
             position: fixed;
             top: 0;
@@ -80,6 +79,65 @@
             display: none;
             border-radius: 0 0 10px 10px;
         }
+
+        /* Modal (Verification) */
+        .verification-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .verification-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .verification-image {
+            margin: 20px 0;
+            max-width: 100%;
+            height: auto;
+        }
+        .verification-input {
+            font-size: 16px;
+            padding: 10px;
+            width: 80%;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .verification-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .verification-button:hover {
+            background-color: #005bb5;
+        }
+
+        .verification-error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .internet-speed {
+            font-size: 18px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -88,43 +146,49 @@
         Dane są przetwarzane lokalnie w Twojej przeglądarce. Nie są zapisywane ani wysyłane do serwera.
     </div>
 
-    <div class="container">
+    <div class="verification-modal" id="verification-modal">
+        <div class="verification-content">
+            <h2>Weryfikacja</h2>
+            <p>Wpisz tekst z obrazka, aby uzyskać dostęp do danych diagnostycznych.</p>
+            <canvas id="verification-canvas" width="200" height="60"></canvas>
+            <input type="text" id="verification-input" class="verification-input" placeholder="Wpisz tekst z obrazka">
+            <button class="verification-button" onclick="validateVerification()">Potwierdź</button>
+            <p class="verification-error" id="verification-error"></p>
+        </div>
+    </div>
+
+    <div class="container" id="content-container" style="display:none;">
         <h1>Diagnostyka Urządzenia</h1>
         <p class="loading" id="loading-text">Pobieranie danych: <span id="progress-text">0%</span></p>
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
         <div class="info" id="device-info"></div>
+        <div class="internet-speed" id="internet-speed"></div>
     </div>
 
     <script>
         let progress = 0;
 
-        // Funkcja do aktualizowania paska postępu
         function updateProgress(value) {
             progress = Math.min(100, progress + value);
             document.getElementById("progress-text").innerText = progress.toFixed(1) + "%";
             document.getElementById("progress-bar").style.width = progress + "%";
         }
 
-        // Funkcja do symulacji opóźnienia
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // Pobieranie informacji o urządzeniu
-        async function getDeviceInfo() {
+        function getDeviceInfo() {
             document.querySelector(".progress-container").style.display = "block";
-
-            // Pokaż powiadomienie o bezpieczeństwie w stylu iOS
             document.getElementById("privacy-notice").style.display = "block";
-            await delay(3000); // Czekaj przez 3 sekundy
+            await delay(3000);
 
-            // Stopniowe zwiększanie postępu
             updateProgress(1);
             await delay(100);
 
-            // Pobierz dane urządzenia
+            // Standardowe dane
             const userAgent = navigator.userAgent;
             const platform = navigator.platform;
             const language = navigator.language;
@@ -155,6 +219,7 @@
             updateProgress(1);
             await delay(100);
 
+            // Bateria, system
             let batteryStatus = "Nieznane";
             if (navigator.getBattery) {
                 const battery = await navigator.getBattery();
@@ -168,7 +233,8 @@
             updateProgress(1);
             await delay(100);
 
-            const gpuInfo = "Nieznane";
+            // Zaawansowane dane o GPU
+            let gpuInfo = "Nieznane";
             try {
                 const gl = document.createElement('canvas').getContext('webgl');
                 const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
@@ -179,36 +245,15 @@
             updateProgress(1);
             await delay(100);
 
-            let devicesList = "Nieznane";
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                devicesList = devices.map(d => `${d.kind}: ${d.label}`).join("<br>");
-            } catch (error) {
-                console.error("Błąd pobierania urządzeń");
-            }
-            updateProgress(1);
-            await delay(100);
-
-            // Dodatkowe dane
-            const lastVisit = localStorage.getItem("lastVisit");
-            const visitTime = lastVisit ? new Date(lastVisit) : "Pierwsza wizyta!";
-            localStorage.setItem("lastVisit", new Date().toString());
-            updateProgress(1);
-            await delay(100);
-
-            const openTabs = window.length || "Nieznane";
-            updateProgress(1);
-            await delay(100);
-
-            // Zakończenie pobierania danych
-            updateProgress(100 - progress);  // Dodaj resztę, by osiągnąć 100%
+            // Zakończenie
+            updateProgress(100 - progress);
             await delay(100);
 
             // Po zakończeniu, ukrywamy pasek postępu
             document.getElementById("loading-text").style.display = "none";
             document.querySelector(".progress-container").style.display = "none";
 
-            // Wyświetlanie danych urządzenia
+            // Wyświetlanie danych
             document.getElementById("device-info").innerHTML = `
                 <h3>Informacje o urządzeniu:</h3>
                 <p><strong>Użytkownik Agent:</strong> ${userAgent}</p>
@@ -222,13 +267,45 @@
                 <p><strong>Poziom baterii:</strong> ${batteryStatus}</p>
                 <p><strong>Sprzęt:</strong> CPU: ${hardwareConcurrency} rdzeni, RAM: ${deviceMemory}</p>
                 <p><strong>GPU:</strong> ${gpuInfo}</p>
-                <p><strong>Urządzenia peryferyjne:</strong> ${devicesList}</p>
-                <p><strong>Czas ostatniej wizyty:</strong> ${visitTime}</p>
-                <p><strong>Ilość otwartych kart:</strong> ${openTabs}</p>
             `;
+
+            // Miernik szybkości internetu
+            getInternetSpeed();
         }
 
-        window.onload = getDeviceInfo;
+        function showVerificationModal() {
+            document.getElementById('verification-modal').style.display = 'flex';
+            generateCaptchaImage(); // Generowanie obrazka CAPTCHA
+        }
+
+        function generateCaptchaImage() {
+            const canvas = document.getElementById('verification-canvas');
+            const ctx = canvas.getContext('2d');
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const randomText = Array.from({length: 6}, () => characters.charAt(Math.floor(Math.random() * characters.length))).join('');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000';
+            ctx.font = '30px Arial';
+            ctx.fillText(randomText, 50, 40);
+            document.getElementById('verification-input').dataset.captcha = randomText; // Zapisywanie poprawnego tekstu
+        }
+
+        function validateVerification() {
+            const userInput = document.getElementById('verification-input').value;
+            const correctCaptcha = document.getElementById('verification-input').dataset.captcha;
+            
+            if (userInput === correctCaptcha) {
+                document.getElementById('verification-modal').style.display = 'none';
+                document.getElementById('content-container').style.display = 'block';
+                getDeviceInfo();
+            } else {
+                document.getElementById('verification-error').innerText = "Nieprawidłowy kod weryfikacji.";
+            }
+        }
+
+        // Pokazujemy weryfikację przed dostępem do danych
+        window.onload = showVerificationModal;
     </script>
 </body>
 </html>
