@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GEOFIND BETA 1.33</title>
+    <title>Polskie Miasta Quiz</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,6 @@
             align-items: center;
             min-height: 100vh;
             color: #111827;
-            overflow: hidden;
         }
 
         .quiz-container {
@@ -27,11 +26,17 @@
             border-radius: 24px;
             padding: 24px;
             width: 100%;
-            max-width: 375px;
+            max-width: 600px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(12px);
             text-align: center;
-            position: relative;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1c2526;
         }
 
         .header {
@@ -43,7 +48,7 @@
 
         .level, .score {
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 500;
             color: #374151;
         }
 
@@ -51,177 +56,140 @@
             color: #10b981;
         }
 
-        .city-image {
+        .map-container {
+            position: relative;
             width: 100%;
-            height: 250px;
-            object-fit: cover;
+            height: 400px;
+            background: #e5e7eb;
             border-radius: 16px;
             margin-bottom: 24px;
-            transition: transform 0.3s ease;
+            overflow: hidden;
         }
 
-        .options {
-            display: grid;
-            gap: 12px;
+        .map {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
-        .option {
-            background: #f3f4f6;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .option:hover {
-            background: #e5e7eb;
-            transform: translateY(-2px);
-        }
-
-        .option.correct {
-            background: #10b981;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .option.wrong {
-            background: #ef4444;
-            color: white;
-            transform: scale(0.95);
-        }
-
-        .feedback {
+        .city-dot {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
             transform: translate(-50%, -50%);
-            font-size: 2rem;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.3s ease;
         }
 
-        .feedback.show {
+        .city-dot.visible {
             opacity: 1;
         }
 
-        /* Animacje */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+        .input-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .quiz-container {
-            animation: fadeIn 0.5s ease;
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            background: #e5e7eb;
+        }
+
+        select {
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .hint {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 8px;
         }
 
         /* Responsywność */
-        @media (max-width: 360px) {
+        @media (max-width: 600px) {
             .quiz-container {
                 margin: 12px;
                 padding: 16px;
             }
 
-            .city-image {
-                height: 200px;
+            .map-container {
+                height: 300px;
             }
         }
     </style>
 </head>
 <body>
     <div class="quiz-container">
+        <h1>Ile polskich miast potrafisz nazwać?</h1>
         <div class="header">
             <div class="level">Poziom: <span id="level">1</span></div>
-            <div class="score">Punkty: <span id="score">0</span></div>
+            <div class="score">Odgadnięte: <span id="score">0</span></div>
         </div>
-        <img id="city-image" class="city-image" src="https://images.unsplash.com/photo-1565108086626-82d596beedef?q=80&w=600" alt="Miasto">
-        <div class="options" id="options">
-            <div class="option" onclick="selectAnswer(0)">Warszawa</div>
-            <div class="option" onclick="selectAnswer(1)">Kraków</div>
-            <div class="option" onclick="selectAnswer(2)">Gdańsk</div>
-            <div class="option" onclick="selectAnswer(3)">Wrocław</div>
+        <div class="map-container" id="map-container">
+            <img class="map" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Poland_map_basic.svg/800px-Poland_map_basic.svg.png" alt="Mapa Polski">
+            <!-- Kropki dla miast -->
+            <div class="city-dot" id="warszawa-dot" style="left: 50%; top: 40%;"></div>
+            <div class="city-dot" id="krakow-dot" style="left: 55%; top: 65%;"></div>
+            <div class="city-dot" id="gdansk-dot" style="left: 45%; top: 20%;"></div>
+            <div class="city-dot" id="wroclaw-dot" style="left: 35%; top: 55%;"></div>
+            <div class="city-dot" id="poznan-dot" style="left: 40%; top: 40%;"></div>
         </div>
-        <div class="feedback" id="feedback"></div>
+        <div class="input-container">
+            <input type="text" id="city-input" placeholder="Wpisz nazwę miasta, np. 'Warszawa'" onkeypress="if(event.key === 'Enter') checkCity()">
+            <select id="region-select">
+                <option value="all">Cała Polska</option>
+            </select>
+        </div>
+        <div class="hint">Wpisz nazwę miasta i naciśnij Enter.</div>
     </div>
 
     <script>
         let level = 1;
         let score = 0;
-        let currentQuestion = 0;
+        const cities = {
+            warszawa: { dot: "warszawa-dot", guessed: false },
+            krakow: { dot: "krakow-dot", guessed: false },
+            gdansk: { dot: "gdansk-dot", guessed: false },
+            wroclaw: { dot: "wroclaw-dot", guessed: false },
+            poznan: { dot: "poznan-dot", guessed: false },
+        };
 
-        const questions = [
-            {
-                image: "https://images.unsplash.com/photo-1565108086626-82d596beedef?q=80&w=600",
-                options: ["Warszawa", "Kraków", "Gdańsk", "Wrocław"],
-                correct: 0
-            },
-            {
-                image: "https://images.unsplash.com/photo-1612977196757-0f5c7d69aebe?q=80&w=600",
-                options: ["Poznań", "Kraków", "Łódź", "Szczecin"],
-                correct: 1
-            },
-            {
-                image: "https://images.unsplash.com/photo-1595151772780-8a4f2a43dc8e?q=80&w=600",
-                options: ["Toruń", "Lublin", "Gdańsk", "Katowice"],
-                correct: 2
-            },
-            // Możesz dodać więcej pytań
-        ];
-
-        function updateUI() {
-            document.getElementById("level").textContent = level;
-            document.getElementById("score").textContent = score;
-            const q = questions[currentQuestion];
-            document.getElementById("city-image").src = q.image;
-            const options = document.getElementById("options").children;
-            for (let i = 0; i < options.length; i++) {
-                options[i].textContent = q.options[i];
-                options[i].classList.remove("correct", "wrong");
-                options[i].onclick = () => selectAnswer(i);
-            }
-            document.getElementById("feedback").textContent = "";
-            document.getElementById("feedback").classList.remove("show");
-        }
-
-        function selectAnswer(index) {
-            const options = document.getElementById("options").children;
-            const feedback = document.getElementById("feedback");
-            if (index === questions[currentQuestion].correct) {
-                options[index].classList.add("correct");
-                score += 10;
-                feedback.textContent = "Brawo!";
-                feedback.style.color = "#10b981";
-                if (score >= level * 50) {
+        function checkCity() {
+            const input = document.getElementById("city-input").value.trim().toLowerCase();
+            if (cities[input] && !cities[input].guessed) {
+                cities[input].guessed = true;
+                document.getElementById(cities[input].dot).classList.add("visible");
+                score++;
+                document.getElementById("score").textContent = score;
+                if (score >= level * 5) {
                     level++;
+                    document.getElementById("level").textContent = level;
                 }
-            } else {
-                options[index].classList.add("wrong");
-                options[questions[currentQuestion].correct].classList.add("correct");
-                feedback.textContent = "Źle!";
-                feedback.style.color = "#ef4444";
             }
-            feedback.classList.add("show");
-            document.getElementById("score").textContent = score;
-            for (let option of options) {
-                option.onclick = null; // Wyłącz klikanie
-            }
-            setTimeout(nextQuestion, 1000); // Przejdź do następnego po 1s
+            document.getElementById("city-input").value = ""; // Wyczyść pole
         }
 
-        function nextQuestion() {
-            currentQuestion++;
-            if (currentQuestion >= questions.length) {
-                currentQuestion = 0; // Zapętlanie
-            }
-            updateUI();
-        }
-
-        // Start
-        updateUI();
+        // Inicjalizacja
+        document.getElementById("level").textContent = level;
+        document.getElementById("score").textContent = score;
     </script>
 </body>
 </html>
