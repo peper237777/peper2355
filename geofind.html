@@ -56,19 +56,13 @@
             color: #10b981;
         }
 
-        .content {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-        }
-
         .map-container {
-            flex: 1;
             position: relative;
             width: 100%;
-            height: 400px;
+            height: 500px;
             background: #e5e7eb;
             border-radius: 16px;
+            margin-bottom: 24px;
             overflow: hidden;
         }
 
@@ -78,35 +72,24 @@
             object-fit: contain;
         }
 
-        .guessed-cities {
-            flex: 1;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 12px;
-            background: #f3f4f6;
-            border-radius: 16px;
+        .city-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: background 0.3s ease;
         }
 
-        .guessed-cities h3 {
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 12px;
-            color: #1c2526;
-        }
-
-        .city-item {
-            padding: 8px;
+        .city-dot.guessed {
             background: #10b981;
-            color: white;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
         }
 
         .input-container {
             display: flex;
             gap: 12px;
-            margin-top: 24px;
+            margin-bottom: 16px;
         }
 
         input[type="text"] {
@@ -146,11 +129,7 @@
                 padding: 16px;
             }
 
-            .content {
-                flex-direction: column;
-            }
-
-            .map-container, .guessed-cities {
+            .map-container {
                 height: 300px;
             }
         }
@@ -163,14 +142,9 @@
             <div class="level">Poziom: <span id="level">1</span></div>
             <div class="score">Odgadnięte: <span id="score">0</span></div>
         </div>
-        <div class="content">
-            <div class="map-container">
-                <img class="map" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Poland_map_basic.svg/800px-Poland_map_basic.svg.png" alt="Mapa Polski">
-            </div>
-            <div class="guessed-cities" id="guessed-cities">
-                <h3>Odgadnięte miasta</h3>
-                <!-- Lista odgadniętych miast będzie tu dynamicznie dodawana -->
-            </div>
+        <div class="map-container" id="map-container">
+            <img class="map" src="https://i.imgur.com/l8BCNP1.png" alt="Mapa Polski">
+            <!-- Kropki dla miast będą generowane dynamicznie -->
         </div>
         <div class="input-container">
             <input type="text" id="city-input" placeholder="Wpisz nazwę miasta, np. 'Warszawa'" onkeypress="if(event.key === 'Enter') checkCity()">
@@ -185,60 +159,71 @@
         let level = 1;
         let score = 0;
 
-        // Lista 50 największych polskich miast (nazwy znormalizowane do małych liter, bez polskich znaków)
+        // Lista 50 największych polskich miast z przybliżonymi współrzędnymi (w procentach na mapie)
         const cities = {
-            "warszawa": { guessed: false },
-            "krakow": { guessed: false },
-            "lodz": { guessed: false },
-            "wroclaw": { guessed: false },
-            "poznan": { guessed: false },
-            "gdansk": { guessed: false },
-            "szczecin": { guessed: false },
-            "bydgoszcz": { guessed: false },
-            "lublin": { guessed: false },
-            "katowice": { guessed: false },
-            "bialystok": { guessed: false },
-            "gdynia": { guessed: false },
-            "czestochowa": { guessed: false },
-            "radom": { guessed: false },
-            "sosnowiec": { guessed: false },
-            "torun": { guessed: false },
-            "kielce": { guessed: false },
-            "rzeszow": { guessed: false },
-            "gliwice": { guessed: false },
-            "zabrze": { guessed: false },
-            "olsztyn": { guessed: false },
-            "bielsko-biala": { guessed: false },
-            "bytom": { guessed: false },
-            "zielona gora": { guessed: false },
-            "rybnik": { guessed: false },
-            "ruda slaska": { guessed: false },
-            "opole": { guessed: false },
-            "tychy": { guessed: false },
-            "gorzow wielkopolski": { guessed: false },
-            "dabrowa gornicza": { guessed: false },
-            "plock": { guessed: false },
-            "elblag": { guessed: false },
-            "walbrzych": { guessed: false },
-            "wloclawek": { guessed: false },
-            "tarnow": { guessed: false },
-            "chorzow": { guessed: false },
-            "koszalin": { guessed: false },
-            "kalisz": { guessed: false },
-            "legnica": { guessed: false },
-            "grudziadz": { guessed: false },
-            "slupsk": { guessed: false },
-            "jaworzno": { guessed: false },
-            "jastrzebie-zdroj": { guessed: false },
-            "krosno": { guessed: false },
-            "siedlce": { guessed: false },
-            "lubin": { guessed: false },
-            "pila": { guessed: false },
-            "pruszcz gdanski": { guessed: false },
-            "inowroclaw": { guessed: false },
-            "suwalki": { guessed: false },
-            "gniezno": { guessed: false },
+            "warszawa": { guessed: false, x: 50, y: 40 },
+            "krakow": { guessed: false, x: 55, y: 65 },
+            "lodz": { guessed: false, x: 45, y: 50 },
+            "wroclaw": { guessed: false, x: 35, y: 55 },
+            "poznan": { guessed: false, x: 40, y: 40 },
+            "gdansk": { guessed: false, x: 45, y: 20 },
+            "szczecin": { guessed: false, x: 25, y: 25 },
+            "bydgoszcz": { guessed: false, x: 40, y: 30 },
+            "lublin": { guessed: false, x: 65, y: 50 },
+            "katowice": { guessed: false, x: 50, y: 70 },
+            "bialystok": { guessed: false, x: 75, y: 35 },
+            "gdynia": { guessed: false, x: 45, y: 15 },
+            "czestochowa": { guessed: false, x: 45, y: 60 },
+            "radom": { guessed: false, x: 55, y: 45 },
+            "sosnowiec": { guessed: false, x: 50, y: 72 },
+            "torun": { guessed: false, x: 45, y: 35 },
+            "kielce": { guessed: false, x: 55, y: 55 },
+            "rzeszow": { guessed: false, x: 65, y: 65 },
+            "gliwice": { guessed: false, x: 45, y: 70 },
+            "zabrze": { guessed: false, x: 47, y: 70 },
+            "olsztyn": { guessed: false, x: 55, y: 25 },
+            "bielsko-biala": { guessed: false, x: 50, y: 75 },
+            "bytom": { guessed: false, x: 48, y: 70 },
+            "zielona gora": { guessed: false, x: 30, y: 40 },
+            "rybnik": { guessed: false, x: 48, y: 73 },
+            "ruda slaska": { guessed: false, x: 49, y: 70 },
+            "opole": { guessed: false, x: 40, y: 60 },
+            "tychy": { guessed: false, x: 50, y: 73 },
+            "gorzow wielkopolski": { guessed: false, x: 30, y: 30 },
+            "dabrowa gornicza": { guessed: false, x: 52, y: 72 },
+            "plock": { guessed: false, x: 45, y: 40 },
+            "elblag": { guessed: false, x: 50, y: 15 },
+            "walbrzych": { guessed: false, x: 30, y: 55 },
+            "wloclawek": { guessed: false, x: 45, y: 35 },
+            "tarnow": { guessed: false, x: 60, y: 65 },
+            "chorzow": { guessed: false, x: 49, y: 70 },
+            "koszalin": { guessed: false, x: 35, y: 20 },
+            "kalisz": { guessed: false, x: 40, y: 45 },
+            "legnica": { guessed: false, x: 30, y: 50 },
+            "grudziadz": { guessed: false, x: 45, y: 30 },
+            "slupsk": { guessed: false, x: 35, y: 15 },
+            "jaworzno": { guessed: false, x: 52, y: 70 },
+            "jastrzebie-zdroj": { guessed: false, x: 50, y: 75 },
+            "krosno": { guessed: false, x: 65, y: 70 },
+            "siedlce": { guessed: false, x: 70, y: 40 },
+            "lubin": { guessed: false, x: 30, y: 50 },
+            "pila": { guessed: false, x: 35, y: 30 },
+            "pruszcz gdanski": { guessed: false, x: 47, y: 20 },
+            "inowroclaw": { guessed: false, x: 40, y: 35 },
+            "suwalki": { guessed: false, x: 75, y: 25 },
+            "gniezno": { guessed: false, x: 40, y: 40 },
         };
+
+        // Generowanie kropek dla miast
+        const mapContainer = document.getElementById("map-container");
+        for (const city in cities) {
+            const dot = document.createElement("div");
+            dot.className = "city-dot";
+            dot.id = `dot-${city}`;
+            dot.style.left = `${cities[city].x}%`;
+            dot.style.top = `${cities[city].y}%`;
+            mapContainer.appendChild(dot);
+        }
 
         function normalizeCityName(name) {
             return name
@@ -259,17 +244,13 @@
             const input = normalizeCityName(document.getElementById("city-input").value.trim());
             if (cities[input] && !cities[input].guessed) {
                 cities[input].guessed = true;
+                document.getElementById(`dot-${input}`).classList.add("guessed");
                 score++;
                 document.getElementById("score").textContent = score;
                 if (score >= level * 10) {
                     level++;
                     document.getElementById("level").textContent = level;
                 }
-                // Dodaj miasto do listy odgadniętych
-                const cityItem = document.createElement("div");
-                cityItem.className = "city-item";
-                cityItem.textContent = input.charAt(0).toUpperCase() + input.slice(1);
-                document.getElementById("guessed-cities").appendChild(cityItem);
             }
             document.getElementById("city-input").value = ""; // Wyczyść pole
         }
