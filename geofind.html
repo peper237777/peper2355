@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEOFIND BETA 1.33</title>
     <style>
-        /* Reset i podstawowe style */
         * {
             margin: 0;
             padding: 0;
@@ -14,71 +13,66 @@
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            background: linear-gradient(135deg, #f5f7fa, #d1d5db);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: #1c2526;
+            color: #111827;
+            overflow: hidden;
         }
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 20px;
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 24px;
+            padding: 24px;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            max-width: 375px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(12px);
             text-align: center;
+            position: relative;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #1c2526;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
 
-        .level-info {
+        .level, .score {
             font-size: 1rem;
-            color: #6b7280;
-            margin-bottom: 20px;
+            font-weight: 600;
+            color: #374151;
         }
 
-        .score {
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 20px;
+        .score span {
             color: #10b981;
         }
 
-        .question-image {
+        .city-image {
             width: 100%;
-            height: 200px;
+            height: 250px;
             object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .question-text {
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            transition: transform 0.3s ease;
         }
 
         .options {
             display: grid;
-            gap: 10px;
+            gap: 12px;
         }
 
         .option {
             background: #f3f4f6;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 1rem;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .option:hover {
@@ -89,118 +83,144 @@
         .option.correct {
             background: #10b981;
             color: white;
+            transform: scale(1.05);
         }
 
         .option.wrong {
             background: #ef4444;
             color: white;
+            transform: scale(0.95);
         }
 
-        button {
-            background: #1c2526;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
+        .feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
 
-        button:hover {
-            background: #374151;
-            transform: translateY(-2px);
+        .feedback.show {
+            opacity: 1;
+        }
+
+        /* Animacje */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .quiz-container {
+            animation: fadeIn 0.5s ease;
         }
 
         /* Responsywność */
-        @media (max-width: 400px) {
-            .container {
-                margin: 10px;
+        @media (max-width: 360px) {
+            .quiz-container {
+                margin: 12px;
+                padding: 16px;
+            }
+
+            .city-image {
+                height: 200px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Polskie Miasta Quiz</h1>
-        <div class="level-info">Poziom: <span id="level">1</span></div>
-        <div class="score">Punkty: <span id="score">0</span></div>
-        <img id="question-image" class="question-image" src="https://via.placeholder.com/400x200?text=Miasto" alt="Miasto">
-        <div class="question-text" id="question-text">Jakie to miasto?</div>
-        <div class="options" id="options">
-            <div class="option" onclick="checkAnswer(0)">Warszawa</div>
-            <div class="option" onclick="checkAnswer(1)">Kraków</div>
-            <div class="option" onclick="checkAnswer(2)">Gdańsk</div>
-            <div class="option" onclick="checkAnswer(3)">Wrocław</div>
+    <div class="quiz-container">
+        <div class="header">
+            <div class="level">Poziom: <span id="level">1</span></div>
+            <div class="score">Punkty: <span id="score">0</span></div>
         </div>
-        <button onclick="nextQuestion()" style="display: none;" id="next-btn">Następne pytanie</button>
+        <img id="city-image" class="city-image" src="https://images.unsplash.com/photo-1565108086626-82d596beedef?q=80&w=600" alt="Miasto">
+        <div class="options" id="options">
+            <div class="option" onclick="selectAnswer(0)">Warszawa</div>
+            <div class="option" onclick="selectAnswer(1)">Kraków</div>
+            <div class="option" onclick="selectAnswer(2)">Gdańsk</div>
+            <div class="option" onclick="selectAnswer(3)">Wrocław</div>
+        </div>
+        <div class="feedback" id="feedback"></div>
     </div>
 
     <script>
         let level = 1;
         let score = 0;
         let currentQuestion = 0;
-        let correctAnswer = Math.floor(Math.random() * 4);
 
         const questions = [
             {
-                image: "https://via.placeholder.com/400x200?text=Warszawa",
-                text: "Jakie to miasto?",
+                image: "https://images.unsplash.com/photo-1565108086626-82d596beedef?q=80&w=600",
                 options: ["Warszawa", "Kraków", "Gdańsk", "Wrocław"],
                 correct: 0
             },
             {
-                image: "https://via.placeholder.com/400x200?text=Kraków",
-                text: "To miasto słynie z Wawelu. Jak się nazywa?",
-                options: ["Łódź", "Kraków", "Poznań", "Szczecin"],
+                image: "https://images.unsplash.com/photo-1612977196757-0f5c7d69aebe?q=80&w=600",
+                options: ["Poznań", "Kraków", "Łódź", "Szczecin"],
                 correct: 1
             },
-            // Dodaj więcej pytań w podobnym formacie
+            {
+                image: "https://images.unsplash.com/photo-1595151772780-8a4f2a43dc8e?q=80&w=600",
+                options: ["Toruń", "Lublin", "Gdańsk", "Katowice"],
+                correct: 2
+            },
+            // Możesz dodać więcej pytań
         ];
 
         function updateUI() {
             document.getElementById("level").textContent = level;
             document.getElementById("score").textContent = score;
             const q = questions[currentQuestion];
-            document.getElementById("question-image").src = q.image;
-            document.getElementById("question-text").textContent = q.text;
+            document.getElementById("city-image").src = q.image;
             const options = document.getElementById("options").children;
             for (let i = 0; i < options.length; i++) {
                 options[i].textContent = q.options[i];
                 options[i].classList.remove("correct", "wrong");
+                options[i].onclick = () => selectAnswer(i);
             }
-            document.getElementById("next-btn").style.display = "none";
+            document.getElementById("feedback").textContent = "";
+            document.getElementById("feedback").classList.remove("show");
         }
 
-        function checkAnswer(index) {
+        function selectAnswer(index) {
             const options = document.getElementById("options").children;
+            const feedback = document.getElementById("feedback");
             if (index === questions[currentQuestion].correct) {
                 options[index].classList.add("correct");
                 score += 10;
-                if (score >= level * 30) {
+                feedback.textContent = "Brawo!";
+                feedback.style.color = "#10b981";
+                if (score >= level * 50) {
                     level++;
                 }
             } else {
                 options[index].classList.add("wrong");
                 options[questions[currentQuestion].correct].classList.add("correct");
+                feedback.textContent = "Źle!";
+                feedback.style.color = "#ef4444";
             }
+            feedback.classList.add("show");
             document.getElementById("score").textContent = score;
-            document.getElementById("next-btn").style.display = "block";
             for (let option of options) {
-                option.onclick = null; // Wyłącz klikanie po odpowiedzi
+                option.onclick = null; // Wyłącz klikanie
             }
+            setTimeout(nextQuestion, 1000); // Przejdź do następnego po 1s
         }
 
         function nextQuestion() {
             currentQuestion++;
             if (currentQuestion >= questions.length) {
-                currentQuestion = 0; // Zapętlanie quizu
+                currentQuestion = 0; // Zapętlanie
             }
             updateUI();
         }
 
-        // Inicjalizacja
+        // Start
         updateUI();
     </script>
 </body>
